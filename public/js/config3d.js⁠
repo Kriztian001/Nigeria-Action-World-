@@ -35,16 +35,19 @@ let currentRadioIndex = 0;
 function cycleRadioStation() {
   const stations = stateRadioStations[userStats.current_state] || stateRadioStations['Lagos'];
   currentRadioIndex = (currentRadioIndex + 1) % stations.length;
-  document.getElementById('radio-station-text').innerText = stations[currentRadioIndex];
+  const radioText = document.getElementById('radio-station-text');
+  if (radioText) radioText.innerText = stations[currentRadioIndex];
 }
 
 function togglePauseMenu() {
   isGamePaused = !isGamePaused;
-  document.getElementById('pause-overlay').style.display = isGamePaused ? 'flex' : 'none';
+  const pauseOverlay = document.getElementById('pause-overlay');
+  if (pauseOverlay) pauseOverlay.style.display = isGamePaused ? 'flex' : 'none';
 }
 
 function toggleWeather() {
-  gameSettings.weather = document.getElementById('setting-weather').value;
+  const weatherSelect = document.getElementById('setting-weather');
+  if (weatherSelect) gameSettings.weather = weatherSelect.value;
   if (game3D && game3D.rainParticles) {
     game3D.rainParticles.visible = (gameSettings.weather === 'rain');
   }
@@ -53,26 +56,42 @@ function toggleWeather() {
 function updateHUD() {
   const hud = document.getElementById('hud-bar');
   if (hud) {
-    hud.innerText = `CASH: N${userStats.cash.toLocaleString()} | STATE: ${userStats.current_state.toUpperCase()} | WANTED: ${userStats.wantedLevel > 0 ? userStats.wantedLevel + ' STARS' : 'CLEAN'}`;
+    hud.innerText = `CASH: ₦${userStats.cash.toLocaleString()} | STATE: ${userStats.current_state.toUpperCase()} | WANTED: ${userStats.wantedLevel > 0 ? userStats.wantedLevel + ' STARS' : 'CLEAN'}`;
   }
 }
 
-function openAuthModal() { document.getElementById('auth-overlay').style.display = 'flex'; }
-function closeAuthModal() { document.getElementById('auth-overlay').style.display = 'none'; }
+function openAuthModal() {
+  const authOverlay = document.getElementById('auth-overlay');
+  if (authOverlay) authOverlay.style.display = 'flex';
+}
+
+function closeAuthModal() {
+  const authOverlay = document.getElementById('auth-overlay');
+  if (authOverlay) authOverlay.style.display = 'none';
+}
 
 document.getElementById('auth-submit')?.addEventListener('click', async () => {
-  const email = document.getElementById('auth-email').value;
-  const password = document.getElementById('auth-password').value;
+  const emailInput = document.getElementById('auth-email');
+  const passwordInput = document.getElementById('auth-password');
   const status = document.getElementById('auth-status');
 
-  if (!email || !password) { status.innerText = "Please fill all fields."; return; }
-  status.innerText = "Syncing with cloud...";
+  const email = emailInput ? emailInput.value : '';
+  const password = passwordInput ? passwordInput.value : '';
+
+  if (!email || !password) {
+    if (status) status.innerText = "Please fill all fields.";
+    return;
+  }
+  if (status) status.innerText = "Syncing with cloud...";
 
   const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
   if (error) {
     const signUp = await supabaseClient.auth.signUp({ email, password });
-    if (signUp.error) status.innerText = signUp.error.message;
-    else loginSuccess(signUp.data.user);
+    if (signUp.error) {
+      if (status) status.innerText = signUp.error.message;
+    } else {
+      loginSuccess(signUp.data.user);
+    }
   } else {
     loginSuccess(data.user);
   }
@@ -80,7 +99,8 @@ document.getElementById('auth-submit')?.addEventListener('click', async () => {
 
 function loginSuccess(user) {
   currentUser = user;
-  document.getElementById('btn-auth-trigger').innerText = "Account Synced";
+  const btnAuth = document.getElementById('btn-auth-trigger');
+  if (btnAuth) btnAuth.innerText = "Account Synced";
   closeAuthModal();
 }
 
@@ -97,14 +117,27 @@ function startLoading() {
 
   const timer = setInterval(() => {
     progress += 20;
-    fill.style.width = `${progress}%`;
-    statusText.innerText = `Loading 3D Engine Systems ${progress}%`;
+    if (fill) fill.style.width = `${progress}%`;
+    if (statusText) statusText.innerText = `Loading 3D Engine Systems ${progress}%`;
 
     if (progress >= 100) {
       clearInterval(timer);
       setTimeout(() => {
-        document.getElementById('loader-overlay').style.display = 'none';
-        game3D = new WorldScene3D();
+        const loaderOverlay = document.getElementById('loader-overlay');
+        const hudBar = document.getElementById('hud-bar');
+        const topBar = document.getElementById('top-bar');
+        const actionBtns = document.getElementById('action-buttons');
+        const radioWidget = document.getElementById('radio-widget');
+
+        if (loaderOverlay) loaderOverlay.style.display = 'none';
+        if (hudBar) hudBar.style.display = 'block';
+        if (topBar) topBar.style.display = 'flex';
+        if (actionBtns) actionBtns.style.display = 'flex';
+        if (radioWidget) radioWidget.style.display = 'flex';
+
+        if (typeof WorldScene3D === 'function') {
+          game3D = new WorldScene3D();
+        }
       }, 300);
     }
   }, 120);
@@ -116,14 +149,20 @@ function setupTouchControls() {
   const stick = document.getElementById('analog-stick');
   let touchId = null, startX = 0, startY = 0;
 
+  if (!touchpad) return;
+
   touchpad.addEventListener('touchstart', (e) => {
     e.preventDefault();
     const t = e.changedTouches[0];
     touchId = t.identifier;
-    startX = t.clientX; startY = t.clientY;
+    startX = t.clientX; 
+    startY = t.clientY;
 
-    base.style.display = 'block';
-    base.style.left = startX + 'px'; base.style.top = startY + 'px';
+    if (base) {
+      base.style.display = 'block';
+      base.style.left = startX + 'px'; 
+      base.style.top = startY + 'px';
+    }
   }, { passive: false });
 
   touchpad.addEventListener('touchmove', (e) => {
@@ -137,25 +176,36 @@ function setupTouchControls() {
         const angle = Math.atan2(dy, dx);
 
         window.moveAngle = angle;
-        stick.style.transform = `translate(calc(-50% + ${Math.cos(angle) * dist}px), calc(-50% + ${Math.sin(angle) * dist}px))`;
+        if (stick) {
+          stick.style.transform = `translate(calc(-50% + ${Math.cos(angle) * dist}px), calc(-50% + ${Math.sin(angle) * dist}px))`;
+        }
       }
     }
   }, { passive: false });
 
   const resetAnalog = () => {
-    touchId = null; window.moveAngle = null;
-    base.style.display = 'none';
+    touchId = null; 
+    window.moveAngle = null;
+    if (base) base.style.display = 'none';
   };
 
   touchpad.addEventListener('touchend', resetAnalog);
   touchpad.addEventListener('touchcancel', resetAnalog);
 
-  document.getElementById('btn-sprint').addEventListener('pointerdown', () => { window.isSprinting = !window.isSprinting; });
-  document.getElementById('btn-punch').addEventListener('pointerdown', () => {
-    if (game3D && game3D.npcs.length > 0) {
-      // Attack nearest NPC
-      const target = game3D.npcs[0];
-      game3D.aiSystem.onEntityAttacked(target, game3D.playerMesh);
-    }
-  });
+  const btnSprint = document.getElementById('btn-sprint');
+  if (btnSprint) {
+    btnSprint.addEventListener('pointerdown', () => { 
+      window.isSprinting = !window.isSprinting; 
+    });
+  }
+
+  const btnPunch = document.getElementById('btn-punch');
+  if (btnPunch) {
+    btnPunch.addEventListener('pointerdown', () => {
+      if (game3D && game3D.npcs && game3D.npcs.length > 0 && game3D.aiSystem) {
+        const target = game3D.npcs[0];
+        game3D.aiSystem.onEntityAttacked(target, game3D.playerMesh);
+      }
+    });
+  }
 }
