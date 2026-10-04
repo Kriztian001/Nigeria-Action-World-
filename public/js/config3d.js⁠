@@ -1,0 +1,161 @@
+const SUPABASE_URL = "https://thltnyelubebdqhkfxuj.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRobHRueWVsdWJlYmRxaGtmeHVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTExMDE1MTUsImV4cCI6210667751NX0.dXaaMyyMBWlpN5Rg0rlCIpNqly_EsnqwhIR7AlAdDuo";
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let currentUser = null;
+let game3D = null;
+let isGamePaused = false;
+window.moveAngle = null;
+window.isSprinting = false;
+
+let gameSettings = {
+  joystickMode: 'dynamic',
+  targetFps: 60,
+  weather: 'rain'
+};
+
+let userStats = {
+  health: 100,
+  cash: 250000,
+  current_state: 'Lagos',
+  outfitColor: 0x38bdf8,
+  wantedLevel: 0,
+  inJail: false,
+  jailTimeRemaining: 0,
+  inVehicle: false
+};
+
+const stateRadioStations = {
+  'Lagos': ['Beat 99.9 FM Lagos', 'Cool 96.9 FM Lagos', 'Soundcity 98.5 FM'],
+  'Abuja': ['Kiss 99.9 FM Abuja', 'Wazobia 99.5 FM Abuja'],
+  'Akwa Ibom': ['Comfort 95.1 FM Uyo', 'Planet 101.1 FM Uyo']
+};
+let currentRadioIndex = 0;
+
+function cycleRadioStation() {
+  const stations = stateRadioStations[userStats.current_state] || stateRadioStations['Lagos'];
+  currentRadioIndex = (currentRadioIndex + 1) % stations.length;
+  document.getElementById('radio-station-text').innerText = stations[currentRadioIndex];
+}
+
+function togglePauseMenu() {
+  isGamePaused = !isGamePaused;
+  document.getElementById('pause-overlay').style.display = isGamePaused ? 'flex' : 'none';
+}
+
+function toggleWeather() {
+  gameSettings.weather = document.getElementById('setting-weather').value;
+  if (game3D && game3D.rainParticles) {
+    game3D.rainParticles.visible = (gameSettings.weather === 'rain');
+  }
+}
+
+function updateHUD() {
+  const hud = document.getElementById('hud-bar');
+  if (hud) {
+    hud.innerText = `CASH: N${userStats.cash.toLocaleString()} | STATE: ${userStats.current_state.toUpperCase()} | WANTED: ${userStats.wantedLevel > 0 ? userStats.wantedLevel + ' STARS' : 'CLEAN'}`;
+  }
+}
+
+function openAuthModal() { document.getElementById('auth-overlay').style.display = 'flex'; }
+function closeAuthModal() { document.getElementById('auth-overlay').style.display = 'none'; }
+
+document.getElementById('auth-submit')?.addEventListener('click', async () => {
+  const email = document.getElementById('auth-email').value;
+  const password = document.getElementById('auth-password').value;
+  const status = document.getElementById('auth-status');
+
+  if (!email || !password) { status.innerText = "Please fill all fields."; return; }
+  status.innerText = "Syncing with cloud...";
+
+  const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+  if (error) {
+    const signUp = await supabaseClient.auth.signUp({ email, password });
+    if (signUp.error) status.innerText = signUp.error.message;
+    else loginSuccess(signUp.data.user);
+  } else {
+    loginSuccess(data.user);
+  }
+});
+
+function loginSuccess(user) {
+  currentUser = user;
+  document.getElementById('btn-auth-trigger').innerText = "Account Synced";
+  closeAuthModal();
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  startLoading();
+  setupTouchControls();
+  updateHUD();
+});
+
+function startLoading() {
+  let progress = 0;
+  const fill = document.getElementById('loader-fill');
+  const statusText = document.getElementById('loader-status-text');
+
+  const timer = setInterval(() => {
+    progress += 20;
+    fill.style.width = `${progress}%`;
+    statusText.innerText = `Loading 3D Engine Systems ${progress}%`;
+
+    if (progress >= 100) {
+      clearInterval(timer);
+      setTimeout(() => {
+        document.getElementById('loader-overlay').style.display = 'none';
+        game3D = new WorldScene3D();
+      }, 300);
+    }
+  }, 120);
+}
+
+function setupTouchControls() {
+  const touchpad = document.getElementById('touch-touchpad');
+  const base = document.getElementById('analog-base');
+  const stick = document.getElementById('analog-stick');
+  let touchId = null, startX = 0, startY = 0;
+
+  touchpad.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    const t = e.changedTouches[0];
+    touchId = t.identifier;
+    startX = t.clientX; startY = t.clientY;
+
+    base.style.display = 'block';
+    base.style.left = startX + 'px'; base.style.top = startY + 'px';
+  }, { passive: false });
+
+  touchpad.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      const t = e.changedTouches[i];
+      if (t.identifier === touchId) {
+        const dx = t.clientX - startX;
+        const dy = t.clientY - startY;
+        const dist = Math.min(Math.hypot(dx, dy), 45);
+        const angle = Math.atan2(dy, dx);
+
+        window.moveAngle = angle;
+        stick.style.transform = `translate(calc(-50% + ${Math.cos(angle) * dist}px), calc(-50% + ${Math.sin(angle) * dist}px))`;
+      }
+    }
+  }, { passive: false });
+
+  const resetAnalog = () => {
+    touchId = null; window.moveAngle = null;
+    base.style.display = 'none';
+  };
+
+  touchpad.addEventListener('touchend', resetAnalog);
+  touchpad.addEventListener('touchcancel', resetAnalog);
+
+  document.getElementById('btn-sprint').addEventListener('pointerdown', () => { window.isSprinting = !window.isSprinting; });
+  document.getElementById('btn-punch').addEventListener('pointerdown', () => {
+    if (game3D && game3D.npcs.length > 0) {
+      // Attack nearest NPC
+      const target = game3D.npcs[0];
+      game3D.aiSystem.onEntityAttacked(target, game3D.playerMesh);
+    }
+  });
+}
