@@ -1,6 +1,6 @@
 class WorldScene3D {
   constructor() {
-    this.container = document.getElementById('game-container');
+    this.container = document.getElementById('game-container') || document.body;
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x0f172a);
     this.scene.fog = new THREE.FogExp2(0x0f172a, 0.012);
@@ -18,8 +18,8 @@ class WorldScene3D {
     this.vehicles = [];
     this.interactables = [];
 
-    this.combatSystem = new CombatSystem(this);
-    this.aiSystem = new AISystem(this);
+    this.combatSystem = typeof CombatSystem !== 'undefined' ? new CombatSystem(this) : null;
+    this.aiSystem = typeof AISystem !== 'undefined' ? new AISystem(this) : null;
 
     this.initLighting();
     this.initEnvironment();
@@ -44,7 +44,7 @@ class WorldScene3D {
   }
 
   initEnvironment() {
-    // 3D Ground & Asphalt Roads
+    // 3D Ground Ground Plane
     const groundGeo = new THREE.PlaneGeometry(600, 600);
     const groundMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.6 });
     const ground = new THREE.Mesh(groundGeo, groundMat);
@@ -71,9 +71,9 @@ class WorldScene3D {
   }
 
   initPlayer() {
-    // Player 3D Mesh (GLTF character fallback geometry)
+    // Player 3D Mesh
     const pGeo = new THREE.CylinderGeometry(0.4, 0.4, 1.8, 16);
-    const pMat = new THREE.MeshStandardMaterial({ color: userStats.outfitColor });
+    const pMat = new THREE.MeshStandardMaterial({ color: (typeof userStats !== 'undefined' && userStats.outfitColor) ? userStats.outfitColor : 0x38bdf8 });
     this.playerMesh = new THREE.Mesh(pGeo, pMat);
     this.playerMesh.position.set(0, 0.9, 0);
     this.playerMesh.castShadow = true;
@@ -92,7 +92,9 @@ class WorldScene3D {
       this.scene.add(mesh);
 
       const npcObj = { mesh, isGangMember: isGang };
-      this.combatSystem.initEntityHealth(npcObj, 100);
+      if (this.combatSystem) {
+        this.combatSystem.initEntityHealth(npcObj, 100);
+      }
       this.npcs.push(npcObj);
     }
   }
@@ -109,7 +111,7 @@ class WorldScene3D {
   }
 
   initZones() {
-    // GTA Style Glowing Mission Cylinder
+    // San Andreas Style Glowing Mission Cylinder
     const mGeo = new THREE.CylinderGeometry(1.5, 1.5, 3, 16);
     const mMat = new THREE.MeshBasicMaterial({ color: 0x22c55e, wireframe: true, transparent: true, opacity: 0.7 });
     const marker = new THREE.Mesh(mGeo, mMat);
@@ -131,6 +133,32 @@ class WorldScene3D {
     this.camera.lookAt(this.playerMesh.position.x, this.playerMesh.position.y + 1.2, this.playerMesh.position.z);
   }
 
+  checkInteractions() {
+    if (!this.playerMesh) return;
+    const btnEnter = document.getElementById('btn-enter');
+    const btnAction = document.getElementById('btn-action');
+
+    // Check vehicle proximity
+    let nearVehicle = false;
+    this.vehicles.forEach(v => {
+      if (v.mesh && this.playerMesh.position.distanceTo(v.mesh.position) < 3.5) {
+        nearVehicle = true;
+      }
+    });
+
+    if (btnEnter) btnEnter.style.display = nearVehicle ? 'block' : 'none';
+
+    // Check mission zone proximity
+    let nearZone = false;
+    this.interactables.forEach(zone => {
+      if (zone.mesh && this.playerMesh.position.distanceTo(zone.mesh.position) < 3.0) {
+        nearZone = true;
+      }
+    });
+
+    if (btnAction) btnAction.style.display = nearZone ? 'block' : 'none';
+  }
+
   onResize() {
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();
@@ -141,8 +169,15 @@ class WorldScene3D {
     requestAnimationFrame(() => this.animate());
     const delta = this.clock.getDelta();
 
-    // Weather particles update
-    if (this.rainParticles && gameSettings.weather === 'rain') {
+    // Rotate glowing mission cylinders
+    this.interactables.forEach(item => {
+      if (item.mesh) {
+        item.mesh.rotation.y += delta * 1.5;
+      }
+    });
+
+    // Weather particle animation
+    if (this.rainParticles && typeof gameSettings !== 'undefined' && gameSettings.weather === 'rain') {
       const positions = this.rainParticles.geometry.attributes.position.array;
       for (let i = 1; i < positions.length; i += 3) {
         positions[i] -= delta * 45;
@@ -151,8 +186,8 @@ class WorldScene3D {
       this.rainParticles.geometry.attributes.position.needsUpdate = true;
     }
 
-    // Controls Movement Update
-    if (window.moveAngle !== null && this.playerMesh && !userStats.inVehicle && !userStats.inJail) {
+    // Touch movement logic
+    if (window.moveAngle !== null && this.playerMesh && (!userStats || (!userStats.inVehicle && !userStats.inJail))) {
       const speed = (window.isSprinting ? 9 : 4.5) * delta;
       const dx = Math.cos(window.moveAngle) * speed;
       const dz = Math.sin(window.moveAngle) * speed;
@@ -162,8 +197,10 @@ class WorldScene3D {
       this.playerMesh.rotation.y = -window.moveAngle + Math.PI / 2;
     }
 
-    this.aiSystem.update(delta);
-    this.combatSystem.update(this.camera);
+    if (this.aiSystem) this.aiSystem.update(delta);
+    if (this.combatSystem) this.combatSystem.update(this.camera);
+
+    this.checkInteractions();
     this.updateThirdPersonCamera();
 
     this.renderer.render(this.scene, this.camera);
