@@ -3,26 +3,26 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>Nigeria Action World 3D</title>
-  <meta name="theme-color" content="#050811" />
+  <title>Nigeria Action World 3D - Ultimate Pro Edition</title>
+  <meta name="theme-color" content="#1e1b4b" />
   
   <!-- Three.js Library CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
-    body, html { width: 100%; height: 100%; overflow: hidden; background-color: #050811; font-family: -apple-system, sans-serif; }
+    body, html { width: 100%; height: 100%; overflow: hidden; background-color: #0f172a; font-family: -apple-system, sans-serif; }
     #game-container { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
 
     /* Loader Overlay */
     #loader-overlay {
-      position: fixed; inset: 0; background: radial-gradient(circle at center, #0f172a 0%, #020617 100%); z-index: 50000;
+      position: fixed; inset: 0; background: #090d16; z-index: 50000;
       display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px;
     }
-    .loader-title { color: #38bdf8; font-size: 1.8rem; font-weight: 900; letter-spacing: 1px; margin-bottom: 8px; text-align: center; text-shadow: 0 0 15px rgba(56, 189, 248, 0.4); }
+    .loader-title { color: #facc15; font-size: 1.8rem; font-weight: 900; letter-spacing: 1px; margin-bottom: 8px; text-align: center; }
     .loader-subtitle { color: #94a3b8; font-size: 0.85rem; margin-bottom: 24px; text-align: center; }
     .loader-bar-bg { width: 280px; height: 10px; background: #1e293b; border-radius: 20px; overflow: hidden; border: 1px solid #334155; }
-    .loader-bar-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #0284c7, #38bdf8); border-radius: 20px; transition: width 0.15s ease-out; }
+    .loader-bar-fill { width: 0%; height: 100%; background: #facc15; border-radius: 20px; transition: width 0.15s ease-out; }
     .loader-status { color: #64748b; font-size: 0.75rem; margin-top: 12px; font-weight: 600; }
 
     /* Portrait Warning */
@@ -31,12 +31,12 @@
       flex-direction: column; align-items: center; justify-content: center; color: #fff; text-align: center; padding: 20px;
     }
     .phone-animation {
-      width: 50px; height: 84px; border: 3px solid #38bdf8; border-radius: 8px;
+      width: 50px; height: 84px; border: 3px solid #facc15; border-radius: 8px;
       animation: rotatePhone 1.8s infinite ease-in-out; margin-bottom: 20px; position: relative;
     }
     .phone-animation::after {
       content: ''; position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%);
-      width: 8px; height: 8px; background: #38bdf8; border-radius: 50%;
+      width: 8px; height: 8px; background: #facc15; border-radius: 50%;
     }
     @keyframes rotatePhone {
       0% { transform: rotate(0deg); }
@@ -47,34 +47,106 @@
       #orientation-warning { display: flex !important; }
     }
 
-    /* GTA Style HUD */
-    #hud-container {
-      position: fixed; top: 16px; right: 20px; z-index: 30000; display: none;
-      flex-direction: column; align-items: flex-end; gap: 4px; pointer-events: none;
+    /* Top HUD / Wanted Stars */
+    #top-hud {
+      position: fixed; top: 16px; left: 20px; right: 20px; z-index: 30000; display: none;
+      justify-content: space-between; align-items: flex-start; pointer-events: none;
     }
-    .hud-cash { color: #22c55e; font-size: 1.5rem; font-weight: 900; text-shadow: 2px 2px 0px #000; font-family: Impact, sans-serif; }
+    .hud-left { display: flex; flex-direction: column; gap: 6px; }
+    .hud-time { color: #facc15; font-size: 1.1rem; font-weight: 900; font-family: monospace; text-shadow: 2px 2px #000; }
+    .hud-stats { display: flex; align-items: center; gap: 10px; }
+    .health-bar-bg { width: 140px; height: 12px; background: rgba(0,0,0,0.8); border: 2px solid #ffffff; border-radius: 4px; overflow: hidden; }
+    .health-bar-fill { width: 100%; height: 100%; background: #22c55e; transition: width 0.2s; }
+    .hud-cash { color: #22c55e; font-size: 1.5rem; font-weight: 900; text-shadow: 2px 2px #000; font-family: Impact, sans-serif; }
+    
+    .wanted-stars { display: flex; gap: 4px; font-size: 1.2rem; text-shadow: 0 0 4px #000; }
+    .star { color: #475569; }
+    .star.active { color: #facc15; text-shadow: 0 0 10px #facc15; }
 
-    /* Touch Controls Base */
+    .menu-btn {
+      background: rgba(15, 23, 42, 0.9); border: 2px solid #facc15; color: #facc15;
+      padding: 8px 16px; border-radius: 8px; font-weight: bold; pointer-events: auto; cursor: pointer; text-shadow: 1px 1px #000;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+    }
+
+    /* Professional Subtitle Box (Bottom Center) */
+    #subtitle-container {
+      position: fixed; bottom: 85px; left: 50%; transform: translateX(-50%); z-index: 30000;
+      width: 80%; max-width: 600px; background: rgba(15, 23, 42, 0.85); border: 1px solid #38bdf8;
+      border-radius: 8px; padding: 10px 16px; text-align: center; color: #f8fafc; font-size: 0.9rem;
+      font-weight: 600; text-shadow: 1px 1px #000; display: none; pointer-events: none;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+    }
+    #subtitle-speaker { color: #38bdf8; font-weight: bold; margin-bottom: 2px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; }
+
+    /* Wasted Overlay Screen */
+    #wasted-overlay {
+      position: fixed; inset: 0; background: rgba(153, 0, 0, 0.4); z-index: 80000; display: none;
+      flex-direction: column; align-items: center; justify-content: center; backdrop-filter: grayscale(80%);
+    }
+    .wasted-text {
+      color: #990000; font-size: 5rem; font-weight: 900; font-family: Impact, sans-serif;
+      letter-spacing: 4px; text-shadow: 3px 3px #000, 0 0 30px rgba(255,0,0,0.8);
+      animation: pulseWasted 1.5s infinite alternate;
+    }
+    @keyframes pulseWasted {
+      0% { transform: scale(1); opacity: 0.8; }
+      100% { transform: scale(1.05); opacity: 1; }
+    }
+
+    /* Circular Radar Mini-Map (GTA Style) */
+    #radar-container {
+      position: fixed; bottom: 20px; left: 20px; width: 140px; height: 140px; border-radius: 50%;
+      background: rgba(15, 23, 42, 0.85); border: 3px solid #64748b; z-index: 30000; display: none;
+      overflow: hidden; pointer-events: none; box-shadow: 0 4px 20px rgba(0,0,0,0.9);
+    }
+    #radar-canvas { width: 100%; height: 100%; }
+
+    /* Pause Menu & Settings */
+    #pause-overlay {
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.96); z-index: 60000; display: none;
+      flex-direction: column; align-items: center; justify-content: center; padding: 20px; color: #fff;
+    }
+    .menu-card {
+      background: #1e293b; border: 2px solid #475569; border-radius: 12px; padding: 20px;
+      width: 100%; max-width: 460px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+      max-height: 90vh; overflow-y: auto;
+    }
+    .menu-card h2 { color: #facc15; text-align: center; font-family: Impact, sans-serif; letter-spacing: 1px; }
+    .setting-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: #cbd5e1; }
+    .setting-row select, .setting-row input, .setting-row button {
+      background: #0f172a; color: #facc15; border: 1px solid #64748b; padding: 6px 10px; border-radius: 6px; font-weight: bold; cursor: pointer;
+    }
+
+    /* Touch Controls Layer */
     #controls-layer { position: fixed; inset: 0; z-index: 20000; pointer-events: none; }
     #touch-touchpad { position: absolute; top: 0; left: 0; width: 50vw; height: 100vh; pointer-events: auto; }
     #camera-dragzone { position: absolute; top: 0; right: 0; width: 50vw; height: 100vh; pointer-events: auto; }
+    
     #analog-base {
-      position: absolute; width: 100px; height: 100px; border-radius: 50%;
-      background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.3);
+      position: absolute; width: 110px; height: 110px; border-radius: 50%;
+      background: rgba(255,255,255,0.1); border: 2px solid rgba(250,204,21,0.4);
       transform: translate(-50%, -50%); display: none; pointer-events: none;
     }
     #analog-stick {
-      position: absolute; top: 50%; left: 50%; width: 44px; height: 44px; border-radius: 50%;
-      background: #38bdf8; transform: translate(-50%, -50%); box-shadow: 0 0 10px rgba(56,189,248,0.5);
+      position: absolute; top: 50%; left: 50%; width: 48px; height: 48px; border-radius: 50%;
+      background: #facc15; transform: translate(-50%, -50%); box-shadow: 0 0 15px rgba(250,204,21,0.7);
     }
+
+    /* Action Buttons (GTA Vegas layout style) */
     #action-buttons {
-      position: absolute; bottom: 24px; right: 24px; display: none; gap: 12px; pointer-events: auto;
+      position: absolute; bottom: 20px; right: 20px; display: none; gap: 12px; pointer-events: auto; align-items: flex-end;
     }
+    .action-group-col { display: flex; flex-direction: column; gap: 10px; }
     .touch-btn {
-      width: 58px; height: 58px; border-radius: 50%; background: rgba(15, 23, 42, 0.85);
-      border: 2px solid #38bdf8; color: #fff; display: flex; align-items: center; justify-content: center;
-      font-size: 0.65rem; font-weight: bold; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      width: 60px; height: 60px; border-radius: 50%; background: rgba(15, 23, 42, 0.85);
+      border: 2px solid #facc15; color: #fff; display: flex; align-items: center; justify-content: center;
+      font-size: 0.6rem; font-weight: bold; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+      cursor: pointer;
     }
+    .touch-btn svg { width: 26px; height: 26px; fill: #facc15; }
+    #btn-enter-car { display: none; border-color: #38bdf8; background: rgba(14, 116, 144, 0.85); }
+    #btn-enter-car svg { fill: #38bdf8; }
   </style>
 </head>
 <body>
@@ -86,13 +158,101 @@
 
   <div id="loader-overlay">
     <div class="loader-title">NIGERIA ACTION WORLD 3D</div>
-    <div class="loader-subtitle">Rendering High-Resolution Street Grids & Lighting...</div>
+    <div class="loader-subtitle">Loading Open World Vegas Map, Super Cars & Police Systems...</div>
     <div class="loader-bar-bg"><div id="loader-fill" class="loader-bar-fill"></div></div>
     <div id="loader-status-text" class="loader-status">Initializing Game Systems 0%</div>
   </div>
 
-  <div id="hud-container">
-    <div class="hud-cash">₦250,000</div>
+  <div id="top-hud">
+    <div class="hud-left">
+      <div id="game-time" class="hud-time">14:30</div>
+      <div class="health-bar-bg"><div id="health-fill" class="health-bar-fill"></div></div>
+      <div class="wanted-stars" id="wanted-display">
+        <span class="star" id="star-1">&#9733;</span>
+        <span class="star" id="star-2">&#9733;</span>
+        <span class="star" id="star-3">&#9733;</span>
+        <span class="star" id="star-4">&#9733;</span>
+        <span class="star" id="star-5">&#9733;</span>
+      </div>
+      <div class="hud-cash" id="cash-display">₦250,000</div>
+    </div>
+    <button class="menu-btn" onclick="togglePauseMenu()">MENU</button>
+  </div>
+
+  <!-- Professional Subtitle Display -->
+  <div id="subtitle-container">
+    <div id="subtitle-speaker">Pedestrian</div>
+    <div id="subtitle-text">Oya make una move, no waste my time here!</div>
+  </div>
+
+  <!-- Wasted Screen Overlay -->
+  <div id="wasted-overlay">
+    <div class="wasted-text">WASTED</div>
+  </div>
+
+  <div id="radar-container">
+    <canvas id="radar-canvas" width="140" height="140"></canvas>
+  </div>
+
+  <!-- Pause Menu & Settings -->
+  <div id="pause-overlay">
+    <div class="menu-card">
+      <h2>SETTINGS & MAP</h2>
+      <div class="setting-row">
+        <span>Graphics Resolution</span>
+        <select id="setting-graphics" onchange="updateGraphics()">
+          <option value="high">High Definition (Sunset Vegas Vibe)</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low (Performance)</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <span>Master Volume</span>
+        <input type="range" id="setting-volume" min="0" max="100" value="80" oninput="updateVolume()">
+      </div>
+      <div class="setting-row">
+        <span>Radio Station</span>
+        <select id="setting-radio" onchange="changeRadioStation()">
+          <optgroup label="Akwa Ibom State">
+            <option value="akbc">AKBC Radio Uyo</option>
+            <option value="comfort">Comfort FM Uyo</option>
+            <option value="planet">Planet FM Uyo</option>
+          </optgroup>
+          <optgroup label="Lagos State">
+            <option value="beat">Beat 99.9 FM Lagos</option>
+            <option value="wazobia">Wazobia FM Lagos</option>
+            <option value="cool">Cool FM Lagos</option>
+          </optgroup>
+          <optgroup label="Abuja (FCT)">
+            <option value="brila">Brila FM Abuja</option>
+            <option value="vision">Vision FM Abuja</option>
+            <option value="capitalsound">Kapital FM Abuja</option>
+          </optgroup>
+          <optgroup label="Rivers State">
+            <option value="phinfo">Nigeria Info Port Harcourt</option>
+            <option value="coolph">Cool FM Port Harcourt</option>
+          </optgroup>
+          <optgroup label="Oyo State">
+            <option value="splash">Splash FM Ibadan</option>
+            <option value="fresh">Fresh FM Ibadan</option>
+          </optgroup>
+          <option value="off">Radio Off</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <span>Police Station HQ</span>
+        <button onclick="teleportTo('police')">Fast Travel</button>
+      </div>
+      <div class="setting-row">
+        <span>City Hospital</span>
+        <button onclick="teleportTo('hospital')">Fast Travel</button>
+      </div>
+      <div class="setting-row">
+        <span>Bathing Salon</span>
+        <button onclick="teleportTo('salon')">Fast Travel</button>
+      </div>
+      <button class="menu-btn" style="width: 100%; margin-top: 4px;" onclick="togglePauseMenu()">RESUME GAME</button>
+    </div>
   </div>
 
   <div id="game-container"></div>
@@ -101,131 +261,345 @@
     <div id="touch-touchpad"></div>
     <div id="camera-dragzone"></div>
     <div id="analog-base"><div id="analog-stick"></div></div>
+    
     <div id="action-buttons">
-      <div id="btn-punch" class="touch-btn">ATTACK</div>
-      <div id="btn-sprint" class="touch-btn">SPRINT</div>
+      <div class="action-group-col">
+        <!-- Enter/Carjacking Button with Animated SVG Icon -->
+        <div id="btn-enter-car" class="touch-btn" title="Carjack">
+          <svg viewBox="0 0 24 24"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.22.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.85 7h10.29l1.04 3H5.81l1.04-3zM19 17H5v-4.66l.12-.34h13.76l.12.34V17z"/><circle cx="7.5" cy="14.5" r="1.5"/><circle cx="16.5" cy="14.5" r="1.5"/></svg>
+        </div>
+        <!-- Shoot Button -->
+        <div id="btn-shoot" class="touch-btn" title="Shoot">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/></svg>
+        </div>
+      </div>
+      <div class="action-group-col">
+        <!-- Punch Button -->
+        <div id="btn-punch" class="touch-btn" title="Punch">
+          <svg viewBox="0 0 24 24"><path d="M20 9V7c0-1.1-.9-2-2-2h-3c0-1.66-1.34-3-3-3S9 3.34 9 5H6c-1.1 0-2 .9-2 2v2c-1.1 0-2 .9-2 2v2c0 1.1.9 2 2 2v4c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2v-4c1.1 0 2-.9 2-2v-2c0-1.1-.9-2-2-2z"/></svg>
+        </div>
+        <!-- Jump Button -->
+        <div id="btn-jump" class="touch-btn" title="Jump">
+          <svg viewBox="0 0 24 24"><path d="M12 4l-8 8h6v8h4v-8h6z"/></svg>
+        </div>
+        <!-- Sprint Button -->
+        <div id="btn-sprint" class="touch-btn" title="Sprint">
+          <svg viewBox="0 0 24 24"><path d="M13.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v7h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.2L6 8.3V13h2V9.6l1.8-.7z"/></svg>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- High Quality 3D Engine Script -->
   <script>
     window.moveAngle = null;
     window.isSprinting = false;
+    let gameRenderer = null;
+    let playerRef = null;
+    let playerVY = 0;
+    let isJumping = false;
+    let playerHealth = 100;
+    let playerCash = 250000;
+    let wantedLevel = 0;
+    let isDead = false;
+    let inVehicle = false;
+    let currentVehicle = null;
 
-    // Loading bar simulation
+    let npcList = [];
+    let vehicleList = [];
+    let buildingBoxes = []; // For solid wall collision detection
+
+    // Loading Simulation
     let progress = 0;
     const fill = document.getElementById('loader-fill');
     const statusText = document.getElementById('loader-status-text');
     const loaderOverlay = document.getElementById('loader-overlay');
-    const hudContainer = document.getElementById('hud-container');
+    const topHud = document.getElementById('top-hud');
+    const radarContainer = document.getElementById('radar-container');
     const actionButtons = document.getElementById('action-buttons');
 
     const loadInterval = setInterval(() => {
       progress += 25;
       if (fill) fill.style.width = progress + '%';
-      if (statusText) statusText.innerText = `Loading Graphics Assets ${progress}%`;
+      if (statusText) statusText.innerText = `Generating Massive Open World City ${progress}%`;
 
       if (progress >= 100) {
         clearInterval(loadInterval);
         if (loaderOverlay) loaderOverlay.style.display = 'none';
-        if (hudContainer) hudContainer.style.display = 'flex';
+        if (topHud) topHud.style.display = 'flex';
+        if (radarContainer) radarContainer.style.display = 'block';
         if (actionButtons) actionButtons.style.display = 'flex';
-        initHighQualityWorld();
+        initVegasEngine();
       }
-    }, 150);
+    }, 120);
 
-    function initHighQualityWorld() {
+    function togglePauseMenu() {
+      const menu = document.getElementById('pause-overlay');
+      menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    function updateGraphics() {
+      const mode = document.getElementById('setting-graphics').value;
+      if (gameRenderer) {
+        gameRenderer.shadowMap.enabled = (mode === 'high');
+        gameRenderer.setPixelRatio(mode === 'high' ? Math.min(window.devicePixelRatio, 2) : 1);
+      }
+    }
+
+    function updateVolume() {
+      const vol = document.getElementById('setting-volume').value;
+      console.log("Master Volume set to:", vol + "%");
+    }
+
+    function changeRadioStation() {
+      const station = document.getElementById('setting-radio').value;
+      console.log("Radio station changed to:", station);
+    }
+
+    function teleportTo(dest) {
+      if (!playerRef) return;
+      if (dest === 'police') playerRef.position.set(120, 0, 120);
+      else if (dest === 'hospital') playerRef.position.set(-120, 0, 120);
+      else if (dest === 'salon') playerRef.position.set(-120, 0, -120);
+      togglePauseMenu();
+    }
+
+    function showSubtitle(speaker, text) {
+      const container = document.getElementById('subtitle-container');
+      const speakerEl = document.getElementById('subtitle-speaker');
+      const textEl = document.getElementById('subtitle-text');
+      if (!container || !speakerEl || !textEl) return;
+      speakerEl.innerText = speaker;
+      textEl.innerText = text;
+      container.style.display = 'block';
+      setTimeout(() => { container.style.display = 'none'; }, 3500);
+    }
+
+    function updateWantedStars() {
+      for (let i = 1; i <= 5; i++) {
+        const star = document.getElementById(`star-${i}`);
+        if (star) {
+          if (i <= wantedLevel) star.classList.add('active');
+          else star.classList.remove('active');
+        }
+      }
+    }
+
+    function handlePlayerDeath() {
+      if (isDead) return;
+      isDead = true;
+      const wasted = document.getElementById('wasted-overlay');
+      if (wasted) wasted.style.display = 'flex';
+
+      setTimeout(() => {
+        if (wasted) wasted.style.display = 'none';
+        playerHealth = 100;
+        document.getElementById('health-fill').style.width = '100%';
+        playerCash = Math.max(0, playerCash - 15000); // Hospital fee deduction
+        document.getElementById('cash-display').innerText = `₦${playerCash.toLocaleString()}`;
+        wantedLevel = 0;
+        updateWantedStars();
+        
+        // Respawn at Hospital
+        if (playerRef) playerRef.position.set(-120, 0, 120);
+        isDead = false;
+      }, 3000);
+    }
+
+    function initVegasEngine() {
       const container = document.getElementById('game-container');
       if (!container || typeof THREE === 'undefined') return;
 
       const scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x050811);
-      scene.fog = new THREE.FogExp2(0x050811, 0.012);
+      // Sunset Vegas color grading (Warm orange/purple gradient sky)
+      scene.background = new THREE.Color(0x4c1d95);
+      scene.fog = new THREE.FogExp2(0x3b0764, 0.008);
 
       const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
       let cameraYaw = 0;
-      let cameraPitch = 0.4;
+      let cameraPitch = 0.38;
 
       const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+      gameRenderer = renderer;
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       container.appendChild(renderer.domElement);
 
-      // High Quality Lighting
-      const ambient = new THREE.AmbientLight(0xffffff, 0.5);
+      // Sunset Lighting
+      const ambient = new THREE.AmbientLight(0xfcd34d, 0.7);
       scene.add(ambient);
 
-      const sun = new THREE.DirectionalLight(0x38bdf8, 1.2);
-      sun.position.set(40, 80, 40);
+      const sun = new THREE.DirectionalLight(0xfb923c, 1.4);
+      sun.position.set(100, 120, 100);
       sun.castShadow = true;
-      sun.shadow.mapSize.width = 2048;
-      sun.shadow.mapSize.height = 2048;
       scene.add(sun);
 
-      // Lagos Asphalt Ground
+      // Large City Grid & Roads
+      const roadMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.9 });
+      for (let i = -400; i <= 400; i += 80) {
+        const roadX = new THREE.Mesh(new THREE.PlaneGeometry(16, 800), roadMat);
+        roadX.rotation.x = -Math.PI / 2;
+        roadX.position.set(i, 0.01, 0);
+        scene.add(roadX);
+
+        const roadZ = new THREE.Mesh(new THREE.PlaneGeometry(800, 16), roadMat);
+        roadZ.rotation.x = -Math.PI / 2;
+        roadZ.position.set(0, 0.01, i);
+        scene.add(roadZ);
+      }
+
       const ground = new THREE.Mesh(
-        new THREE.PlaneGeometry(400, 400),
-        new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.8 })
+        new THREE.PlaneGeometry(1000, 1000),
+        new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.9 })
       );
       ground.rotation.x = -Math.PI / 2;
       ground.receiveShadow = true;
       scene.add(ground);
 
-      // Realistic Detailed Buildings & Street Network
-      const buildingColors = [0x1e293b, 0x0f172a, 0x334155, 0x1e1b4b];
-      for (let x = -140; x <= 140; x += 40) {
-        for (let z = -140; z <= 140; z += 40) {
-          if (Math.abs(x) < 15 && Math.abs(z) < 15) continue;
+      // Landmarks: Police Station, Hospital, Salon
+      const policeHQ = new THREE.Mesh(new THREE.BoxGeometry(35, 26, 35), new THREE.MeshStandardMaterial({ color: 0x1e3a8a }));
+      policeHQ.position.set(120, 13, 120);
+      policeHQ.castShadow = true;
+      scene.add(policeHQ);
+      buildingBoxes.push(new THREE.Box3().setFromObject(policeHQ));
 
-          const height = 15 + Math.random() * 35;
-          const bMesh = new THREE.Mesh(
-            new THREE.BoxGeometry(24, height, 24),
-            new THREE.MeshStandardMaterial({ 
-              color: buildingColors[Math.floor(Math.random() * buildingColors.length)],
-              roughness: 0.5 
-            })
+      const hospital = new THREE.Mesh(new THREE.BoxGeometry(35, 24, 35), new THREE.MeshStandardMaterial({ color: 0xf8fafc }));
+      hospital.position.set(-120, 12, 120);
+      hospital.castShadow = true;
+      scene.add(hospital);
+      buildingBoxes.push(new THREE.Box3().setFromObject(hospital));
+
+      const salon = new THREE.Mesh(new THREE.BoxGeometry(25, 16, 25), new THREE.MeshStandardMaterial({ color: 0xdb2777 }));
+      salon.position.set(-120, 8, -120);
+      salon.castShadow = true;
+      scene.add(salon);
+      buildingBoxes.push(new THREE.Box3().setFromObject(salon));
+
+      // Large Open World Buildings & Solid Colliders
+      for (let x = -360; x <= 360; x += 60) {
+        for (let z = -360; z <= 360; z += 60) {
+          if (Math.abs(x) < 30 && Math.abs(z) < 30) continue;
+          const height = 22 + Math.random() * 55;
+          const building = new THREE.Mesh(
+            new THREE.BoxGeometry(32, height, 32),
+            new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.6 })
           );
-          bMesh.position.set(x, height / 2, z);
-          bMesh.castShadow = true;
-          bMesh.receiveShadow = true;
-          scene.add(bMesh);
+          building.position.set(x, height / 2, z);
+          building.castShadow = true;
+          building.receiveShadow = true;
+          scene.add(building);
+          buildingBoxes.push(new THREE.Box3().setFromObject(building));
         }
       }
 
-      // Detailed Player Model
-      const playerGroup = new THREE.Group();
-      
-      const body = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.35, 0.35, 1.1, 12),
-        new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.3 })
-      );
-      body.position.y = 0.85;
-      body.castShadow = true;
+      // ── VEHICLE BUILDERS (Danfo, Keke, Hilux, Lexus, Supercars) ──
+      function createVehicleMesh(type) {
+        const group = new THREE.Group();
+        if (type === 'danfo') {
+          const body = new THREE.Mesh(new THREE.BoxGeometry(2.3, 1.5, 4.8), new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.3 }));
+          body.position.y = 0.8;
+          body.castShadow = true;
+          group.add(body);
+        } else if (type === 'keke') {
+          const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.4, 2.1), new THREE.MeshStandardMaterial({ color: 0xf97316 }));
+          cabin.position.y = 0.8;
+          cabin.castShadow = true;
+          group.add(cabin);
+        } else if (type === 'hilux') {
+          const cab = new THREE.Mesh(new THREE.BoxGeometry(2.1, 1.2, 2.3), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 }));
+          cab.position.set(0, 0.8, 0.5);
+          cab.castShadow = true;
+          group.add(cab);
+        } else if (type === 'supercar') {
+          const body = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.9, 4.5), new THREE.MeshStandardMaterial({ color: 0xdc2626, metalness: 0.8, roughness: 0.1 }));
+          body.position.y = 0.5;
+          body.castShadow = true;
+          group.add(body);
+        } else {
+          const lexus = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.3, 4.6), new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.7, roughness: 0.2 }));
+          lexus.position.y = 0.75;
+          lexus.castShadow = true;
+          group.add(lexus);
+        }
+        return group;
+      }
 
-      const head = new THREE.Mesh(
-        new THREE.SphereGeometry(0.28, 16, 16),
-        new THREE.MeshStandardMaterial({ color: 0x8d5524 })
-      );
-      head.position.y = 1.55;
-      head.castShadow = true;
+      // Spawn Traffic & Parked Cars
+      const vTypes = ['danfo', 'keke', 'hilux', 'lexus', 'supercar'];
+      for (let i = 0; i < 20; i++) {
+        const t = vTypes[Math.floor(Math.random() * vTypes.length)];
+        const vGroup = createVehicleMesh(t);
+        const vx = (Math.floor(Math.random() * 6) - 3) * 64 + 8;
+        const vz = (Math.random() - 0.5) * 600;
+        vGroup.position.set(vx, 0, vz);
+        scene.add(vGroup);
+        vehicleList.push({ group: vGroup, type: t, speed: 0.3 + Math.random() * 0.4, dir: Math.random() > 0.5 ? 1 : -1 });
+      }
 
-      const hair = new THREE.Mesh(
-        new THREE.BoxGeometry(0.45, 0.18, 0.45),
-        new THREE.MeshStandardMaterial({ color: 0x0f172a })
-      );
-      hair.position.y = 1.72;
+      // ── CHARACTER BUILDER ──
+      function createHumanCharacter(jacketColor, pantsColor) {
+        const group = new THREE.Group();
+        const skinMat = new THREE.MeshStandardMaterial({ color: 0x8d5524, roughness: 0.6 });
+        const jacketMat = new THREE.MeshStandardMaterial({ color: jacketColor, roughness: 0.5 });
+        const pantsMat = new THREE.MeshStandardMaterial({ color: pantsColor, roughness: 0.7 });
 
-      playerGroup.add(body, head, hair);
+        const torso = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.85, 0.35), jacketMat);
+        torso.position.y = 1.05;
+        torso.castShadow = true;
+
+        const head = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.38, 0.38), skinMat);
+        head.position.y = 1.68;
+        head.castShadow = true;
+
+        const armGeo = new THREE.BoxGeometry(0.18, 0.75, 0.18);
+        const leftArm = new THREE.Mesh(armGeo, jacketMat);
+        leftArm.position.set(-0.4, 1.05, 0);
+        const rightArm = new THREE.Mesh(armGeo, jacketMat);
+        rightArm.position.set(0.4, 1.05, 0);
+
+        const legGeo = new THREE.BoxGeometry(0.22, 0.8, 0.22);
+        const leftLeg = new THREE.Mesh(legGeo, pantsMat);
+        leftLeg.position.set(-0.16, 0.4, 0);
+        const rightLeg = new THREE.Mesh(legGeo, pantsMat);
+        rightLeg.position.set(0.16, 0.4, 0);
+
+        group.add(torso, head, leftArm, rightArm, leftLeg, rightLeg);
+        return { group, leftLeg, rightLeg, leftArm, rightArm };
+      }
+
+      const playerObj = createHumanCharacter(0xd97706, 0x1e3a8a);
+      const playerGroup = playerObj.group;
       playerGroup.position.set(0, 0, 0);
       scene.add(playerGroup);
+      playerRef = playerGroup;
 
-      // Controls Setup
+      // NPCs
+      const npcDialogues = [
+        "Oya make una move, no waste my time here!",
+        "Normal level, Lagos traffic no be beans.",
+        "Abeg give me way make I pass!",
+        "Wetin you dey find for this area?",
+        "Security tight here, make you no try nonsense."
+      ];
+      for (let i = 0; i < 15; i++) {
+        const npcObj = createHumanCharacter(0x1e40af, 0x111827);
+        npcObj.group.position.set((Math.random() - 0.5) * 300, 0, (Math.random() - 0.5) * 300);
+        scene.add(npcObj.group);
+        npcList.push({
+          obj: npcObj,
+          speed: 0.03 + Math.random() * 0.03,
+          dir: 1,
+          dialogue: npcDialogues[Math.floor(Math.random() * npcDialogues.length)]
+        });
+      }
+
+      // Touch & Action Controls
       const touchpad = document.getElementById('touch-touchpad');
       const dragzone = document.getElementById('camera-dragzone');
       const base = document.getElementById('analog-base');
       const stick = document.getElementById('analog-stick');
+      const btnEnterCar = document.getElementById('btn-enter-car');
 
       let moveTouchId = null, startX = 0, startY = 0;
       let camTouchId = null, lastCamX = 0, lastCamY = 0;
@@ -247,7 +621,7 @@
           if (t.identifier === moveTouchId) {
             const dx = t.clientX - startX;
             const dy = t.clientY - startY;
-            const dist = Math.min(Math.hypot(dx, dy), 45);
+            const dist = Math.min(Math.hypot(dx, dy), 48);
             window.moveAngle = Math.atan2(dy, dx);
             stick.style.transform = `translate(calc(-50% + ${Math.cos(window.moveAngle) * dist}px), calc(-50% + ${Math.sin(window.moveAngle) * dist}px))`;
           }
@@ -274,7 +648,7 @@
             const dx = t.clientX - lastCamX;
             const dy = t.clientY - lastCamY;
             cameraYaw -= dx * 0.005;
-            cameraPitch = Math.max(0.1, Math.min(Math.PI / 2.2, cameraPitch + dy * 0.005));
+            cameraPitch = Math.max(0.1, Math.min(Math.PI / 2.1, cameraPitch + dy * 0.005));
             lastCamX = t.clientX; lastCamY = t.clientY;
           }
         }
@@ -284,28 +658,182 @@
         window.isSprinting = !window.isSprinting;
       });
 
-      // Animation Game Loop
+      document.getElementById('btn-jump').addEventListener('pointerdown', () => {
+        if (!isJumping && !inVehicle) {
+          playerVY = 0.22;
+          isJumping = true;
+        }
+      });
+
+      document.getElementById('btn-punch').addEventListener('pointerdown', () => {
+        if (!inVehicle) {
+          playerObj.rightArm.rotation.x = -Math.PI / 2;
+          setTimeout(() => { playerObj.rightArm.rotation.x = 0; }, 180);
+          
+          // Check if hitting NPC or Police
+          npcList.forEach(npc => {
+            if (playerGroup.position.distanceTo(npc.obj.group.position) < 3) {
+              wantedLevel = Math.min(5, wantedLevel + 1);
+              updateWantedStars();
+              showSubtitle("Pedestrian", "Why you dey fight me? Police!");
+            }
+          });
+        }
+      });
+
+      document.getElementById('btn-shoot').addEventListener('pointerdown', () => {
+        if (inVehicle || playerGroup) {
+          showSubtitle("Player", "Firing weapon!");
+          wantedLevel = Math.min(5, wantedLevel + 2);
+          updateWantedStars();
+        }
+      });
+
+      // Carjacking Interaction Button
+      btnEnterCar.addEventListener('pointerdown', () => {
+        if (!inVehicle && currentVehicle) {
+          inVehicle = true;
+          currentVehicle.group.remove(currentVehicle.group); // Drag NPC out
+          btnEnterCar.style.display = 'none';
+          showSubtitle("System", "Vehicle hijacked successfully.");
+          wantedLevel = Math.min(5, wantedLevel + 1);
+          updateWantedStars();
+        } else if (inVehicle) {
+          inVehicle = false;
+          currentVehicle = null;
+          showSubtitle("System", "Exited vehicle.");
+        }
+      });
+
+      // Radar Mini-Map
+      const radarCanvas = document.getElementById('radar-canvas');
+      const radarCtx = radarCanvas ? radarCanvas.getContext('2d') : null;
+
+      function drawRadar() {
+        if (!radarCtx || !playerRef) return;
+        radarCtx.clearRect(0, 0, 140, 140);
+        radarCtx.fillStyle = '#0f172a';
+        radarCtx.fillRect(0, 0, 140, 140);
+
+        radarCtx.fillStyle = '#facc15';
+        radarCtx.beginPath();
+        radarCtx.arc(70, 70, 5, 0, Math.PI * 2);
+        radarCtx.fill();
+
+        npcList.forEach(npc => {
+          const dx = npc.obj.group.position.x - playerRef.position.x;
+          const dz = npc.obj.group.position.z - playerRef.position.z;
+          if (Math.hypot(dx, dz) < 100) {
+            radarCtx.fillStyle = '#38bdf8';
+            radarCtx.fillRect(70 + dx * 1.0, 70 + dz * 1.0, 3, 3);
+          }
+        });
+      }
+
+      // Collision Detection Utility
+      function checkWallCollision(nextX, nextZ) {
+        const playerBox = new THREE.Box3(
+          new THREE.Vector3(nextX - 0.4, 0, nextZ - 0.4),
+          new THREE.Vector3(nextX + 0.4, 1.8, nextZ + 0.4)
+        );
+        for (let i = 0; i < buildingBoxes.length; i++) {
+          if (buildingBoxes[i].intersectsBox(playerBox)) return true;
+        }
+        return false;
+      }
+
+      // Main Game Loop
       const clock = new THREE.Clock();
       function animate() {
         requestAnimationFrame(animate);
         const delta = clock.getDelta();
+        const time = clock.getElapsedTime();
 
-        if (window.moveAngle !== null) {
-          const speed = (window.isSprinting ? 8.0 : 4.0) * delta;
-          const moveHeading = window.moveAngle + cameraYaw;
-          playerGroup.position.x += Math.cos(moveHeading) * speed;
-          playerGroup.position.z += Math.sin(moveHeading) * speed;
-          playerGroup.rotation.y = -moveHeading + Math.PI / 2;
+        if (!isDead) {
+          // Player Movement & Wall Collision Handling
+          if (window.moveAngle !== null) {
+            const moveSpeed = (window.isSprinting ? 10.0 : 5.0) * delta;
+            const moveHeading = window.moveAngle + cameraYaw;
+            const nextX = playerGroup.position.x + Math.cos(moveHeading) * moveSpeed;
+            const nextZ = playerGroup.position.z + Math.sin(moveHeading) * moveSpeed;
+
+            if (!checkWallCollision(nextX, nextZ)) {
+              playerGroup.position.x = nextX;
+              playerGroup.position.z = nextZ;
+            }
+            playerGroup.rotation.y = -moveHeading + Math.PI / 2;
+
+            if (!inVehicle) {
+              const swing = Math.sin(time * 15) * 0.6;
+              playerObj.leftLeg.rotation.x = swing;
+              playerObj.rightLeg.rotation.x = -swing;
+              playerObj.leftArm.rotation.x = -swing;
+            }
+          } else if (!inVehicle) {
+            playerObj.leftLeg.rotation.x = 0;
+            playerObj.rightLeg.rotation.x = 0;
+            playerObj.leftArm.rotation.x = 0;
+          }
+
+          if (isJumping && !inVehicle) {
+            playerGroup.position.y += playerVY;
+            playerVY -= 0.015;
+            if (playerGroup.position.y <= 0) {
+              playerGroup.position.y = 0;
+              isJumping = false;
+            }
+          }
+
+          // Check proximity to vehicles for carjacking
+          let nearCar = null;
+          vehicleList.forEach(car => {
+            if (playerGroup.position.distanceTo(car.group.position) < 3.5) {
+              nearCar = car;
+            }
+          });
+
+          if (nearCar && !inVehicle) {
+            currentVehicle = nearCar;
+            btnEnterCar.style.display = 'flex';
+          } else if (!inVehicle && !nearCar) {
+            btnEnterCar.style.display = 'none';
+          }
+
+          // Trigger random NPC speech subtitles
+          if (Math.floor(time) % 8 === 0 && Math.random() < 0.03) {
+            const randomNpc = npcList[Math.floor(Math.random() * npcList.length)];
+            if (playerGroup.position.distanceTo(randomNpc.obj.group.position) < 15) {
+              showSubtitle("Pedestrian", randomNpc.dialogue);
+            }
+          }
         }
 
-        // Camera Follow Orbit
-        const camDist = 6.5;
+        // Animate Traffic
+        vehicleList.forEach(car => {
+          car.group.position.z += car.speed * car.dir;
+          if (car.group.position.z > 400) car.group.position.z = -400;
+          if (car.group.position.z < -400) car.group.position.z = 400;
+        });
+
+        // Animate NPCs
+        npcList.forEach(npc => {
+          npc.obj.group.position.z += npc.speed * npc.dir;
+          if (Math.abs(npc.obj.group.position.z) > 400) npc.dir *= -1;
+          const swing = Math.sin(time * 10) * 0.5;
+          npc.obj.leftLeg.rotation.x = swing;
+          npc.obj.rightLeg.rotation.x = -swing;
+        });
+
+        if (Math.floor(time * 10) % 3 === 0) drawRadar();
+
+        // Camera Tracking
+        const camDist = inVehicle ? 8.5 : 6.8;
         const cx = playerGroup.position.x - Math.sin(cameraYaw) * Math.cos(cameraPitch) * camDist;
-        const cy = playerGroup.position.y + Math.sin(cameraPitch) * camDist + 1.0;
+        const cy = playerGroup.position.y + Math.sin(cameraPitch) * camDist + 1.2;
         const cz = playerGroup.position.z - Math.cos(cameraYaw) * Math.cos(cameraPitch) * camDist;
 
         camera.position.set(cx, cy, cz);
-        camera.lookAt(playerGroup.position.x, playerGroup.position.y + 1.0, playerGroup.position.z);
+        camera.lookAt(playerGroup.position.x, playerGroup.position.y + 1.1, playerGroup.position.z);
 
         renderer.render(scene, camera);
       }
