@@ -2,111 +2,90 @@ const SUPABASE_URL = "https://thltnyelubebdqhkfxuj.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRobHRueWVsdWJlYmRxaGtmeHVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTExMDE1MTUsImV4cCI6210667751NX0.dXaaMyyMBWlpN5Rg0rlCIpNqly_EsnqwhIR7AlAdDuo";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-let currentUser = null;
 let game3D = null;
 let isGamePaused = false;
 window.moveAngle = null;
 window.isSprinting = false;
 
 let gameSettings = {
-  joystickMode: 'dynamic',
+  graphics: 'high',
   targetFps: 60,
-  weather: 'rain'
+  audioEnabled: true
 };
 
 let userStats = {
   health: 100,
+  armor: 50,
   cash: 250000,
   current_state: 'Lagos',
-  outfitColor: 0x38bdf8,
+  gender: 'male',
+  hairStyle: 'short',
+  outfitColor: '#38bdf8',
   wantedLevel: 0,
-  inJail: false,
-  jailTimeRemaining: 0,
   inVehicle: false
 };
 
-const stateRadioStations = {
-  'Lagos': ['Beat 99.9 FM Lagos', 'Cool 96.9 FM Lagos', 'Soundcity 98.5 FM'],
-  'Abuja': ['Kiss 99.9 FM Abuja', 'Wazobia 99.5 FM Abuja'],
-  'Akwa Ibom': ['Comfort 95.1 FM Uyo', 'Planet 101.1 FM Uyo']
-};
-let currentRadioIndex = 0;
+// Subtitle & Speech Audio Handler
+function speakCharacter(text, speaker = 'Citizen') {
+  const subtitleBox = document.getElementById('dialogue-subtitle');
+  if (subtitleBox) {
+    subtitleBox.innerText = `${speaker}: "${text}"`;
+    subtitleBox.style.display = 'block';
+    setTimeout(() => { subtitleBox.style.display = 'none'; }, 3500);
+  }
 
-function cycleRadioStation() {
-  const stations = stateRadioStations[userStats.current_state] || stateRadioStations['Lagos'];
-  currentRadioIndex = (currentRadioIndex + 1) % stations.length;
-  const radioText = document.getElementById('radio-station-text');
-  if (radioText) radioText.innerText = stations[currentRadioIndex];
-}
-
-function togglePauseMenu() {
-  isGamePaused = !isGamePaused;
-  const pauseOverlay = document.getElementById('pause-overlay');
-  if (pauseOverlay) pauseOverlay.style.display = isGamePaused ? 'flex' : 'none';
-}
-
-function toggleWeather() {
-  const weatherSelect = document.getElementById('setting-weather');
-  if (weatherSelect) gameSettings.weather = weatherSelect.value;
-  if (game3D && game3D.rainParticles) {
-    game3D.rainParticles.visible = (gameSettings.weather === 'rain');
+  if (gameSettings.audioEnabled && 'speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 1.0;
+    utterance.pitch = speaker === 'Player' ? 0.9 : 1.1;
+    window.speechSynthesis.speak(utterance);
   }
 }
 
 function updateHUD() {
-  const hud = document.getElementById('hud-bar');
-  if (hud) {
-    hud.innerText = `CASH: ₦${userStats.cash.toLocaleString()} | STATE: ${userStats.current_state.toUpperCase()} | WANTED: ${userStats.wantedLevel > 0 ? userStats.wantedLevel + ' STARS' : 'CLEAN'}`;
+  const cashText = document.getElementById('hud-cash-text');
+  const healthBar = document.getElementById('hud-health-bar');
+  const armorBar = document.getElementById('hud-armor-bar');
+  const wantedText = document.getElementById('hud-wanted-text');
+
+  if (cashText) cashText.innerText = `₦${userStats.cash.toLocaleString()}`;
+  if (healthBar) healthBar.style.width = `${Math.max(0, userStats.health)}%`;
+  if (armorBar) armorBar.style.width = `${Math.max(0, userStats.armor)}%`;
+  if (wantedText) {
+    wantedText.innerText = userStats.wantedLevel > 0 ? '★'.repeat(userStats.wantedLevel) : '';
   }
 }
 
-function openAuthModal() {
-  const authOverlay = document.getElementById('auth-overlay');
-  if (authOverlay) authOverlay.style.display = 'flex';
+function openCustomization() {
+  document.getElementById('customization-overlay').style.display = 'flex';
 }
 
-function closeAuthModal() {
-  const authOverlay = document.getElementById('auth-overlay');
-  if (authOverlay) authOverlay.style.display = 'none';
+function closeCustomization() {
+  document.getElementById('customization-overlay').style.display = 'none';
 }
 
-document.getElementById('auth-submit')?.addEventListener('click', async () => {
-  const emailInput = document.getElementById('auth-email');
-  const passwordInput = document.getElementById('auth-password');
-  const status = document.getElementById('auth-status');
+function updatePlayerAppearance() {
+  userStats.gender = document.getElementById('cust-gender').value;
+  userStats.hairStyle = document.getElementById('cust-hair').value;
+  userStats.outfitColor = document.getElementById('cust-color').value;
 
-  const email = emailInput ? emailInput.value : '';
-  const password = passwordInput ? passwordInput.value : '';
+  if (game3D) game3D.rebuildPlayerMesh();
+}
 
-  if (!email || !password) {
-    if (status) status.innerText = "Please fill all fields.";
-    return;
-  }
-  if (status) status.innerText = "Syncing with cloud...";
+function togglePauseMenu() {
+  isGamePaused = !isGamePaused;
+  document.getElementById('pause-overlay').style.display = isGamePaused ? 'flex' : 'none';
+}
 
-  const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-  if (error) {
-    const signUp = await supabaseClient.auth.signUp({ email, password });
-    if (signUp.error) {
-      if (status) status.innerText = signUp.error.message;
-    } else {
-      loginSuccess(signUp.data.user);
-    }
-  } else {
-    loginSuccess(data.user);
-  }
-});
-
-function loginSuccess(user) {
-  currentUser = user;
-  const btnAuth = document.getElementById('btn-auth-trigger');
-  if (btnAuth) btnAuth.innerText = "Account Synced";
-  closeAuthModal();
+function updateSettings() {
+  gameSettings.graphics = document.getElementById('setting-graphics').value;
+  gameSettings.audioEnabled = document.getElementById('setting-audio').value === 'enabled';
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   startLoading();
-  setupTouchControls();
+  setupTouchAndCameraControls();
   updateHUD();
 });
 
@@ -118,94 +97,94 @@ function startLoading() {
   const timer = setInterval(() => {
     progress += 20;
     if (fill) fill.style.width = `${progress}%`;
-    if (statusText) statusText.innerText = `Loading 3D Engine Systems ${progress}%`;
+    if (statusText) statusText.innerText = `Loading Street Assets & Audio Engine ${progress}%`;
 
     if (progress >= 100) {
       clearInterval(timer);
       setTimeout(() => {
-        const loaderOverlay = document.getElementById('loader-overlay');
-        const hudBar = document.getElementById('hud-bar');
-        const topBar = document.getElementById('top-bar');
-        const actionBtns = document.getElementById('action-buttons');
-        const radioWidget = document.getElementById('radio-widget');
+        document.getElementById('loader-overlay').style.display = 'none';
+        document.getElementById('hud-container').style.display = 'flex';
+        document.getElementById('top-bar').style.display = 'flex';
+        document.getElementById('action-buttons').style.display = 'flex';
 
-        if (loaderOverlay) loaderOverlay.style.display = 'none';
-        if (hudBar) hudBar.style.display = 'block';
-        if (topBar) topBar.style.display = 'flex';
-        if (actionBtns) actionBtns.style.display = 'flex';
-        if (radioWidget) radioWidget.style.display = 'flex';
-
-        if (typeof WorldScene3D === 'function') {
-          game3D = new WorldScene3D();
-        }
+        game3D = new WorldScene3D();
       }, 300);
     }
-  }, 120);
+  }, 100);
 }
 
-function setupTouchControls() {
+function setupTouchAndCameraControls() {
   const touchpad = document.getElementById('touch-touchpad');
+  const dragzone = document.getElementById('camera-dragzone');
   const base = document.getElementById('analog-base');
   const stick = document.getElementById('analog-stick');
-  let touchId = null, startX = 0, startY = 0;
 
-  if (!touchpad) return;
+  let moveTouchId = null, startX = 0, startY = 0;
+  let camTouchId = null, lastCamX = 0, lastCamY = 0;
 
+  // Touch Movement Joystick
   touchpad.addEventListener('touchstart', (e) => {
     e.preventDefault();
     const t = e.changedTouches[0];
-    touchId = t.identifier;
-    startX = t.clientX; 
-    startY = t.clientY;
+    moveTouchId = t.identifier;
+    startX = t.clientX; startY = t.clientY;
 
-    if (base) {
-      base.style.display = 'block';
-      base.style.left = startX + 'px'; 
-      base.style.top = startY + 'px';
-    }
+    base.style.display = 'block';
+    base.style.left = startX + 'px';
+    base.style.top = startY + 'px';
   }, { passive: false });
 
   touchpad.addEventListener('touchmove', (e) => {
     e.preventDefault();
     for (let i = 0; i < e.changedTouches.length; i++) {
       const t = e.changedTouches[i];
-      if (t.identifier === touchId) {
+      if (t.identifier === moveTouchId) {
         const dx = t.clientX - startX;
         const dy = t.clientY - startY;
         const dist = Math.min(Math.hypot(dx, dy), 45);
         const angle = Math.atan2(dy, dx);
 
         window.moveAngle = angle;
-        if (stick) {
-          stick.style.transform = `translate(calc(-50% + ${Math.cos(angle) * dist}px), calc(-50% + ${Math.sin(angle) * dist}px))`;
-        }
+        stick.style.transform = `translate(calc(-50% + ${Math.cos(angle) * dist}px), calc(-50% + ${Math.sin(angle) * dist}px))`;
       }
     }
   }, { passive: false });
 
   const resetAnalog = () => {
-    touchId = null; 
-    window.moveAngle = null;
-    if (base) base.style.display = 'none';
+    moveTouchId = null; window.moveAngle = null;
+    base.style.display = 'none';
   };
-
   touchpad.addEventListener('touchend', resetAnalog);
   touchpad.addEventListener('touchcancel', resetAnalog);
 
-  const btnSprint = document.getElementById('btn-sprint');
-  if (btnSprint) {
-    btnSprint.addEventListener('pointerdown', () => { 
-      window.isSprinting = !window.isSprinting; 
-    });
-  }
+  // 360 Camera Touch Dragging
+  dragzone.addEventListener('touchstart', (e) => {
+    const t = e.changedTouches[0];
+    camTouchId = t.identifier;
+    lastCamX = t.clientX;
+    lastCamY = t.clientY;
+  });
 
-  const btnPunch = document.getElementById('btn-punch');
-  if (btnPunch) {
-    btnPunch.addEventListener('pointerdown', () => {
-      if (game3D && game3D.npcs && game3D.npcs.length > 0 && game3D.aiSystem) {
-        const target = game3D.npcs[0];
-        game3D.aiSystem.onEntityAttacked(target, game3D.playerMesh);
+  dragzone.addEventListener('touchmove', (e) => {
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      const t = e.changedTouches[i];
+      if (t.identifier === camTouchId && game3D) {
+        const dx = t.clientX - lastCamX;
+        const dy = t.clientY - lastCamY;
+        game3D.cameraYaw -= dx * 0.006;
+        game3D.cameraPitch = Math.max(0.1, Math.min(Math.PI / 2.5, game3D.cameraPitch + dy * 0.005));
+
+        lastCamX = t.clientX;
+        lastCamY = t.clientY;
       }
-    });
-  }
+    }
+  });
+
+  document.getElementById('btn-sprint').addEventListener('pointerdown', () => {
+    window.isSprinting = !window.isSprinting;
+  });
+
+  document.getElementById('btn-punch').addEventListener('pointerdown', () => {
+    if (game3D) game3D.punchAction();
+  });
 }
