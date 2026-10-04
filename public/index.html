@@ -8,13 +8,13 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   
+  <link rel="stylesheet" href="styles.css" />
+
   <!-- 3D Engine Libraries & Supabase -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
 
@@ -34,7 +34,7 @@
   </div>
 
   <!-- Vehicle Radio Broadcast Widget -->
-  <div id="radio-widget" onclick="cycleRadioStation()">
+  <div id="radio-widget" onclick="cycleRadioStation()" style="display:none;">
     <div class="radio-waves">
       <div class="radio-bar"></div><div class="radio-bar"></div><div class="radio-bar"></div>
     </div>
@@ -42,7 +42,7 @@
   </div>
 
   <!-- Top Navigation Utility Bar -->
-  <div id="top-bar">
+  <div id="top-bar" style="display:none;">
     <button class="top-btn" onclick="togglePauseMenu()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
       Pause
@@ -54,7 +54,7 @@
   </div>
 
   <!-- Pause & Game Settings Modal -->
-  <div id="pause-overlay">
+  <div id="pause-overlay" style="display:none;">
     <div class="modal-card">
       <h2>GAME PAUSED</h2>
       <div class="setting-row">
@@ -89,14 +89,14 @@
   </div>
 
   <!-- Jail Overlay HUD -->
-  <div id="jail-overlay">
+  <div id="jail-overlay" style="display:none;">
     <h1>ARRESTED & DETAINED</h1>
     <p>Serving cell sentence for offences committed</p>
     <div id="jail-timer">00:15</div>
   </div>
 
   <!-- Auth Modal -->
-  <div id="auth-overlay">
+  <div id="auth-overlay" style="display:none;">
     <div class="auth-card">
       <h3>NIGERIA ACTION WORLD 3D</h3>
       <p class="subtitle">Log in to save real estate, personal vehicles & balance</p>
@@ -111,17 +111,15 @@
   <!-- 3D WebGL Canvas Container -->
   <div id="game-container"></div>
 
-  <!-- HUD Overlay -->
-  <div id="hud-bar" style="position:fixed; top:12px; left:16px; z-index:30000; background:rgba(15,23,42,0.9); color:#38bdf8; padding:8px 14px; border-radius:8px; font-weight:bold; font-size:0.85rem; border:1px solid #334155;">
-    Loading HUD...
-  </div>
+  <!-- HUD Overlay (Hidden until game fully loads) -->
+  <div id="hud-bar" style="display:none; position:fixed; top:12px; left:16px; z-index:30000; background:rgba(15,23,42,0.9); color:#38bdf8; padding:8px 14px; border-radius:8px; font-weight:bold; font-size:0.85rem; border:1px solid #334155;"></div>
 
   <!-- Dynamic Touch Controls Overlay -->
   <div id="controls-layer">
     <div id="touch-touchpad"></div>
     <div id="analog-base"><div id="analog-stick"></div></div>
     
-    <div id="action-buttons">
+    <div id="action-buttons" style="display:none;">
       <div id="btn-punch" class="touch-btn">ATTACK</div>
       <div id="btn-sprint" class="touch-btn">SPRINT</div>
       <div id="btn-action" class="touch-btn" style="display:none; background: rgba(34, 197, 94, 0.8);">ACTION</div>
