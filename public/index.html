@@ -3,181 +3,32 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>Nigeria Action World</title>
+  <title>Nigeria Action World 3D</title>
   <meta name="theme-color" content="#050811" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   
-  <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+  <!-- 3D Engine Libraries & Supabase -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; touch-action: none; }
-    body, html { width: 100%; height: 100%; overflow: hidden; background-color: #050811; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    #game-container { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
-
-    /* Centered Fullscreen Orientation Warning Overlay */
-    #orientation-warning {
-      display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(5, 8, 17, 0.98); color: #fff; z-index: 99999;
-      flex-direction: column; align-items: center; justify-content: center; gap: 20px;
-      padding: 24px; text-align: center; backdrop-filter: blur(8px);
-    }
-    .phone-container { width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; }
-    .phone-icon {
-      width: 36px; height: 64px; border: 3px solid #38bdf8; border-radius: 8px;
-      position: relative; animation: rotatePhoneCenter 2.5s infinite ease-in-out;
-      box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
-    }
-    .phone-icon::after {
-      content: ''; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%);
-      width: 8px; height: 8px; border-radius: 50%; background: #38bdf8;
-    }
-    @keyframes rotatePhoneCenter {
-      0%, 15% { transform: rotate(0deg); }
-      50%, 65% { transform: rotate(-90deg); }
-      90%, 100% { transform: rotate(0deg); }
-    }
-    #orientation-warning p { font-size: 1.1rem; color: #e2e8f0; font-weight: 600; max-width: 280px; line-height: 1.4; }
-    #orientation-warning span { font-size: 0.8rem; color: #38bdf8; text-transform: uppercase; letter-spacing: 1px; }
-
-    @media screen and (orientation: portrait) { #orientation-warning { display: flex; } }
-
-    /* Professional Initial Loader Overlay */
-    #loader-overlay {
-      display: flex; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: #050811; color: #fff; z-index: 80000; flex-direction: column;
-      align-items: center; justify-content: center; gap: 16px; backdrop-filter: blur(10px);
-    }
-    .loader-title { font-size: 1.4rem; font-weight: 800; color: #38bdf8; letter-spacing: 2px; }
-    .loader-subtitle { font-size: 0.85rem; color: #94a3b8; margin-bottom: 12px; }
-    .loader-bar-bg { width: 280px; height: 10px; background: #1e293b; border-radius: 20px; overflow: hidden; border: 1px solid #334155; }
-    .loader-bar-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #38bdf8, #22c55e); border-radius: 20px; transition: width 0.2s ease; }
-    .loader-status { font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
-
-    /* Top Navigation Utility Bar */
-    #top-bar {
-      position: fixed; top: 12px; right: 16px; z-index: 40000; display: flex; gap: 10px; align-items: center;
-    }
-    .top-btn {
-      background: rgba(15, 23, 42, 0.85); color: #38bdf8; border: 1px solid #334155;
-      padding: 8px 14px; border-radius: 8px; font-size: 0.8rem; font-weight: bold; cursor: pointer;
-      backdrop-filter: blur(6px); display: flex; align-items: center; gap: 6px; transition: all 0.2s;
-    }
-    .top-btn:active { transform: scale(0.95); background: #38bdf8; color: #000; }
-
-    /* Animated Vector Radio Widget */
-    #radio-widget {
-      display: none; position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
-      z-index: 45000; background: rgba(15, 23, 42, 0.9); border: 1px solid #38bdf8;
-      border-radius: 20px; padding: 6px 14px; align-items: center; gap: 10px; cursor: pointer;
-      backdrop-filter: blur(8px); box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
-    }
-    .radio-waves { display: flex; align-items: flex-end; gap: 2px; height: 14px; }
-    .radio-bar { width: 3px; background: #22c55e; border-radius: 2px; animation: soundWave 1.2s infinite ease-in-out; }
-    .radio-bar:nth-child(1) { height: 60%; animation-delay: 0.1s; }
-    .radio-bar:nth-child(2) { height: 100%; animation-delay: 0.3s; }
-    .radio-bar:nth-child(3) { height: 40%; animation-delay: 0.2s; }
-    @keyframes soundWave { 0%, 100% { transform: scaleY(0.4); } 50% { transform: scaleY(1); } }
-    #radio-station-text { font-size: 0.75rem; color: #f8fafc; font-weight: 700; letter-spacing: 0.5px; }
-
-    /* Pause & Settings Overlay */
-    #pause-overlay {
-      display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(5, 8, 17, 0.88); z-index: 70000; align-items: center; justify-content: center; backdrop-filter: blur(10px);
-    }
-    .modal-card {
-      background: #0f172a; color: #fff; width: 90%; max-width: 420px; padding: 24px;
-      border-radius: 16px; border: 1px solid #334155; box-shadow: 0 10px 30px rgba(0,0,0,0.7);
-    }
-    .modal-card h2 { font-size: 1.3rem; color: #38bdf8; margin-bottom: 16px; text-align: center; letter-spacing: 1px; }
-    .setting-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #1e293b; }
-    .setting-label { font-size: 0.85rem; color: #e2e8f0; font-weight: 600; }
-    .setting-control select, .setting-control button {
-      background: #1e293b; color: #38bdf8; border: 1px solid #334155; padding: 6px 12px;
-      border-radius: 6px; font-size: 0.8rem; outline: none; cursor: pointer; font-weight: bold;
-    }
-    .btn-resume {
-      width: 100%; padding: 12px; border-radius: 8px; border: none; background: #22c55e;
-      color: #fff; font-weight: bold; font-size: 0.9rem; cursor: pointer; margin-top: 18px; transition: background 0.2s;
-    }
-
-    /* Auth Modal */
-    #auth-overlay {
-      display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(5, 8, 17, 0.85); z-index: 50000; align-items: center; justify-content: center; backdrop-filter: blur(8px);
-    }
-    .auth-card {
-      background: #0f172a; color: #fff; width: 90%; max-width: 360px; padding: 22px;
-      border-radius: 14px; border: 1px solid #334155; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-    }
-    .auth-card h3 { font-size: 1.2rem; color: #38bdf8; margin-bottom: 4px; letter-spacing: 0.5px; }
-    .auth-card p.subtitle { color: #94a3b8; font-size: 0.75rem; margin-bottom: 14px; }
-    .auth-input {
-      width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 6px;
-      border: 1px solid #334155; background: #1e293b; color: #fff; font-size: 0.85rem; outline: none;
-    }
-    .auth-btn-small {
-      width: 100%; padding: 10px; border-radius: 6px; border: none;
-      background: #22c55e; color: #fff; font-weight: bold; font-size: 0.85rem; cursor: pointer; margin-bottom: 8px;
-    }
-    .auth-status { font-size: 0.75rem; color: #ef4444; margin-bottom: 8px; min-height: 16px; }
-
-    /* Jail Overlay Screen */
-    #jail-overlay {
-      display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(15, 23, 42, 0.85); z-index: 60000; flex-direction: column;
-      align-items: center; justify-content: center; backdrop-filter: blur(6px); color: #fff;
-    }
-    #jail-overlay h1 { color: #ef4444; font-size: 2rem; letter-spacing: 2px; margin-bottom: 8px; text-transform: uppercase; }
-    #jail-timer { font-size: 3rem; font-weight: bold; color: #facc15; font-family: monospace; }
-
-    /* Dynamic Touch Controls Overlay */
-    #controls-layer {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      pointer-events: none; z-index: 10000;
-    }
-    #touch-touchpad { position: absolute; top: 0; left: 0; width: 60%; height: 100%; pointer-events: auto; }
-    
-    /* Dynamic Floating / Fixed Analog Joystick */
-    #analog-base {
-      display: none; position: absolute; width: 110px; height: 110px; border-radius: 50%;
-      background: rgba(255, 255, 255, 0.12); border: 2px solid rgba(255, 255, 255, 0.25);
-      transform: translate(-50%, -50%); pointer-events: none; backdrop-filter: blur(2px);
-    }
-    #analog-stick {
-      position: absolute; top: 50%; left: 50%; width: 48px; height: 48px; border-radius: 50%;
-      background: rgba(56, 189, 248, 0.8); border: 2px solid #ffffff;
-      transform: translate(-50%, -50%); pointer-events: none; box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
-    }
-
-    /* Action Buttons Overlay */
-    #action-buttons { position: absolute; bottom: 24px; right: 24px; display: flex; gap: 12px; pointer-events: auto; }
-    .touch-btn {
-      width: 62px; height: 62px; border-radius: 50%;
-      background: rgba(15, 23, 42, 0.7); border: 2px solid rgba(255,255,255,0.3);
-      color: #fff; font-weight: bold; font-size: 0.7rem; display: flex; align-items: center;
-      justify-content: center; backdrop-filter: blur(4px); box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-      transition: transform 0.1s;
-    }
-    .touch-btn:active { transform: scale(0.9); background: rgba(56, 189, 248, 0.8); color: #000; }
-  </style>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
 
   <!-- Fullscreen Centered Phone Rotation Overlay -->
   <div id="orientation-warning">
-    <div class="phone-container">
-      <div class="phone-icon"></div>
-    </div>
+    <div class="phone-container"><div class="phone-icon"></div></div>
     <p>Please rotate your phone to landscape mode</p>
     <span>Rotate device to play</span>
   </div>
 
   <!-- Initial System Loading Overlay -->
   <div id="loader-overlay">
-    <div class="loader-title">NIGERIA ACTION WORLD</div>
-    <div class="loader-subtitle">Updating state maps and vehicle engines...</div>
+    <div class="loader-title">NIGERIA ACTION WORLD 3D</div>
+    <div class="loader-subtitle">Loading 3D world shaders, city meshes & character models...</div>
     <div class="loader-bar-bg"><div id="loader-fill" class="loader-bar-fill"></div></div>
     <div id="loader-status-text" class="loader-status">Initializing Game Systems 0%</div>
   </div>
@@ -190,7 +41,7 @@
     <div id="radio-station-text">Beat 99.9 FM (Lagos)</div>
   </div>
 
-  <!-- Top Navigation Bar -->
+  <!-- Top Navigation Utility Bar -->
   <div id="top-bar">
     <button class="top-btn" onclick="togglePauseMenu()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
@@ -225,12 +76,11 @@
         </div>
       </div>
       <div class="setting-row">
-        <div class="setting-label">Graphics Quality</div>
+        <div class="setting-label">Weather System</div>
         <div class="setting-control">
-          <select id="setting-graphics" onchange="updateSettings()">
-            <option value="ultra">Ultra Quality</option>
-            <option value="medium">Medium Performance</option>
-            <option value="low">Low Quality</option>
+          <select id="setting-weather" onchange="toggleWeather()">
+            <option value="rain">Tropical Rainstorm</option>
+            <option value="clear">Clear Sunny Sky</option>
           </select>
         </div>
       </div>
@@ -248,7 +98,7 @@
   <!-- Auth Modal -->
   <div id="auth-overlay">
     <div class="auth-card">
-      <h3>NIGERIA ACTION WORLD</h3>
+      <h3>NIGERIA ACTION WORLD 3D</h3>
       <p class="subtitle">Log in to save real estate, personal vehicles & balance</p>
       <input type="email" id="auth-email" class="auth-input" placeholder="Email Address" />
       <input type="password" id="auth-password" class="auth-input" placeholder="Password" />
@@ -258,7 +108,13 @@
     </div>
   </div>
 
+  <!-- 3D WebGL Canvas Container -->
   <div id="game-container"></div>
+
+  <!-- HUD Overlay -->
+  <div id="hud-bar" style="position:fixed; top:12px; left:16px; z-index:30000; background:rgba(15,23,42,0.9); color:#38bdf8; padding:8px 14px; border-radius:8px; font-weight:bold; font-size:0.85rem; border:1px solid #334155;">
+    Loading HUD...
+  </div>
 
   <!-- Dynamic Touch Controls Overlay -->
   <div id="controls-layer">
@@ -266,638 +122,20 @@
     <div id="analog-base"><div id="analog-stick"></div></div>
     
     <div id="action-buttons">
-      <div id="btn-punch" class="touch-btn">PUNCH</div>
+      <div id="btn-punch" class="touch-btn">ATTACK</div>
       <div id="btn-sprint" class="touch-btn">SPRINT</div>
-      <div id="btn-action" class="touch-btn" style="display:none; background: rgba(34, 197, 94, 0.7);">ACTION</div>
-      <div id="btn-enter" class="touch-btn" style="display:none; background: rgba(56, 189, 248, 0.7);">STEAL/ENTER</div>
-      <div id="btn-gas" class="touch-btn" style="display:none; background: rgba(34, 197, 94, 0.7);">GAS</div>
-      <div id="btn-brake" class="touch-btn" style="display:none; background: rgba(239, 68, 68, 0.7);">BRAKE</div>
-      <div id="btn-exit" class="touch-btn" style="display:none; background: rgba(239, 68, 68, 0.7);">EXIT</div>
+      <div id="btn-action" class="touch-btn" style="display:none; background: rgba(34, 197, 94, 0.8);">ACTION</div>
+      <div id="btn-enter" class="touch-btn" style="display:none; background: rgba(56, 189, 248, 0.8);">STEAL/ENTER</div>
+      <div id="btn-gas" class="touch-btn" style="display:none; background: rgba(34, 197, 94, 0.8);">GAS</div>
+      <div id="btn-brake" class="touch-btn" style="display:none; background: rgba(239, 68, 68, 0.8);">BRAKE</div>
+      <div id="btn-exit" class="touch-btn" style="display:none; background: rgba(239, 68, 68, 0.8);">EXIT</div>
     </div>
   </div>
 
-  <script>
-    const SUPABASE_URL = "https://thltnyelubebdqhkfxuj.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRobHRueWVsdWJlYmRxaGtmeHVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTExMDE1MTUsImV4cCI6210667751NX0.dXaaMyyMBWlpN5Rg0rlCIpNqly_EsnqwhIR7AlAdDuo";
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    let currentUser = null;
-    let gameInstance = null;
-    let isGamePaused = false;
-
-    let gameSettings = {
-      joystickMode: 'dynamic', // 'dynamic' or 'fixed'
-      targetFps: 60,
-      graphicsQuality: 'ultra'
-    };
-
-    let userStats = {
-      health: 100,
-      cash: 250000,
-      current_state: 'Lagos',
-      outfit: 'Civilian Casual',
-      outfitColor: 0x38bdf8,
-      wantedLevel: 0,
-      inJail: false,
-      jailTimeRemaining: 0,
-      properties: [],
-      inVehicle: false,
-      currentVehicle: null
-    };
-
-    // State Radio Stations (Music Focus across Nigerian States)
-    const stateRadioStations = {
-      'Lagos': ['Beat 99.9 FM Lagos', 'Cool 96.9 FM Lagos', 'Soundcity 98.5 FM'],
-      'Abuja': ['Kiss 99.9 FM Abuja', 'Wazobia 99.5 FM Abuja', 'Cool 95.9 FM Abuja'],
-      'Ibadan': ['Splash 105.5 FM Ibadan', 'Beat 97.9 FM Ibadan', 'Fresh 105.9 FM'],
-      'Port Harcourt': ['Cool 95.9 FM PH', 'Wazobia 94.1 FM PH', 'Today 95.1 FM PH'],
-      'Akwa Ibom': ['Comfort 95.1 FM Uyo', 'Planet 101.1 FM Uyo', 'Inspiration 105.9 FM Uyo']
-    };
-    let currentRadioIndex = 0;
-
-    function cycleRadioStation() {
-      const stations = stateRadioStations[userStats.current_state] || stateRadioStations['Lagos'];
-      currentRadioIndex = (currentRadioIndex + 1) % stations.length;
-      document.getElementById('radio-station-text').innerText = stations[currentRadioIndex];
-    }
-
-    function togglePauseMenu() {
-      isGamePaused = !isGamePaused;
-      const pauseModal = document.getElementById('pause-overlay');
-      if (isGamePaused) {
-        pauseModal.style.display = 'flex';
-        if (gameInstance) gameInstance.loop.sleep();
-      } else {
-        pauseModal.style.display = 'none';
-        if (gameInstance) gameInstance.loop.wake();
-      }
-    }
-
-    function updateSettings() {
-      gameSettings.joystickMode = document.getElementById('setting-joystick').value;
-      gameSettings.targetFps = parseInt(document.getElementById('setting-fps').value);
-      gameSettings.graphicsQuality = document.getElementById('setting-graphics').value;
-
-      if (gameInstance) {
-        gameInstance.loop.targetFps = gameSettings.targetFps;
-      }
-    }
-
-    function openAuthModal() { document.getElementById('auth-overlay').style.display = 'flex'; }
-    function closeAuthModal() { document.getElementById('auth-overlay').style.display = 'none'; }
-
-    document.getElementById('auth-submit').addEventListener('click', async () => {
-      const email = document.getElementById('auth-email').value;
-      const password = document.getElementById('auth-password').value;
-      const status = document.getElementById('auth-status');
-
-      if (!email || !password) { status.innerText = "Please complete all fields."; return; }
-      status.innerText = "Syncing...";
-
-      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-      if (error) {
-        const signUp = await supabaseClient.auth.signUp({ email, password });
-        if (signUp.error) status.innerText = signUp.error.message;
-        else loginSuccess(signUp.data.user);
-      } else {
-        loginSuccess(data.user);
-      }
-    });
-
-    async function loginSuccess(user) {
-      currentUser = user;
-      document.getElementById('btn-auth-trigger').innerText = "Account Synced";
-      closeAuthModal();
-
-      const { data } = await supabaseClient.from('profiles').select('*').eq('id', user.id).single();
-      if (data) userStats = Object.assign(userStats, data);
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      startLoadingSequence();
-    });
-
-    function startLoadingSequence() {
-      let progress = 0;
-      const fill = document.getElementById('loader-fill');
-      const statusText = document.getElementById('loader-status-text');
-
-      const interval = setInterval(() => {
-        progress += Math.floor(Math.random() * 18) + 10;
-        if (progress > 100) progress = 100;
-
-        fill.style.width = `${progress}%`;
-        statusText.innerText = `Updating Game Core Assets ${progress}%`;
-
-        if (progress >= 100) {
-          clearInterval(interval);
-          setTimeout(() => {
-            document.getElementById('loader-overlay').style.display = 'none';
-            initGame();
-          }, 400);
-        }
-      }, 120);
-    }
-
-    function initGame() {
-      const config = {
-        type: Phaser.AUTO,
-        parent: 'game-container',
-        fps: { target: gameSettings.targetFps },
-        scale: {
-          mode: Phaser.Scale.RESIZE,
-          autoCenter: Phaser.Scale.CENTER_BOTH
-        },
-        physics: {
-          default: 'arcade',
-          arcade: { gravity: { y: 0 }, debug: false }
-        },
-        scene: [NigeriaWorldScene]
-      };
-      gameInstance = new Phaser.Game(config);
-    }
-
-    class NigeriaWorldScene extends Phaser.Scene {
-      constructor() { super({ key: 'NigeriaWorldScene' }); }
-
-      preload() {
-        this.generateGraphicsTextures();
-      }
-
-      generateGraphicsTextures() {
-        let g = this.make.graphics({ x: 0, y: 0, add: false });
-        g.fillStyle(userStats.outfitColor, 1);
-        g.fillCircle(16, 16, 14);
-        g.fillStyle(0x0f172a, 1);
-        g.fillCircle(22, 16, 4);
-        g.generateTexture('player_tex', 32, 32);
-
-        g.clear();
-        g.fillStyle(0x10b981, 1);
-        g.fillCircle(12, 12, 10);
-        g.generateTexture('civ_tex', 24, 24);
-
-        g.clear();
-        g.fillStyle(0x1e3a8a, 1);
-        g.fillCircle(14, 14, 12);
-        g.fillStyle(0xef4444, 1);
-        g.fillCircle(18, 14, 3);
-        g.generateTexture('police_tex', 28, 28);
-
-        g.clear();
-        g.fillStyle(0x0f172a, 1);
-        g.fillRoundedRect(0, 0, 56, 28, 4);
-        g.fillStyle(0x38bdf8, 1);
-        g.fillRect(20, 0, 16, 28);
-        g.fillStyle(0xef4444, 1); g.fillRect(26, 4, 4, 8);
-        g.fillStyle(0x3b82f6, 1); g.fillRect(26, 16, 4, 8);
-        g.generateTexture('veh_Police Cruiser', 56, 28);
-      }
-
-      create() {
-        this.cameras.main.setBounds(0, 0, 6000, 4000);
-        this.physics.world.setBounds(0, 0, 6000, 4000);
-
-        this.add.rectangle(3000, 2000, 6000, 4000, 0x152117);
-        this.createRoads();
-        this.createPropertiesAndZones();
-
-        this.player = this.physics.add.sprite(800, 600, 'player_tex');
-        this.player.setCollideWorldBounds(true);
-        this.isSprinting = false;
-
-        this.civilians = this.physics.add.group();
-        this.policeGroup = this.physics.add.group();
-        this.spawnNPCs();
-
-        this.vehicles = this.physics.add.group();
-        this.spawnVehicles();
-
-        this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
-
-        this.createHUD();
-        this.setupAnalogControls();
-
-        this.evadeTimer = 0;
-        this.time.addEvent({ delay: 1000, callback: this.handleGameTimers, callbackScope: this, loop: true });
-      }
-
-      updatePlayerTexture() {
-        if (this.textures.exists('player_tex')) this.textures.remove('player_tex');
-        const g = this.make.graphics({ x: 0, y: 0, add: false });
-        g.fillStyle(userStats.outfitColor, 1);
-        g.fillCircle(16, 16, 14);
-        g.fillStyle(0x0f172a, 1);
-        g.fillCircle(22, 16, 4);
-        g.generateTexture('player_tex', 32, 32);
-
-        if (this.player) this.player.setTexture('player_tex');
-      }
-
-      createRoads() {
-        const g = this.add.graphics();
-        g.lineStyle(150, 0x1e293b, 1);
-        g.strokeLineShape(new Phaser.Geom.Line(200, 600, 5800, 600));
-        g.strokeLineShape(new Phaser.Geom.Line(200, 2000, 5800, 2000));
-        g.strokeLineShape(new Phaser.Geom.Line(200, 3400, 5800, 3400));
-        g.strokeLineShape(new Phaser.Geom.Line(1000, 200, 1000, 3800));
-        g.strokeLineShape(new Phaser.Geom.Line(3000, 200, 3000, 3800));
-
-        g.lineStyle(4, 0xfacc15, 0.8);
-        g.strokeLineShape(new Phaser.Geom.Line(200, 600, 5800, 600));
-        g.strokeLineShape(new Phaser.Geom.Line(200, 2000, 5800, 2000));
-        g.strokeLineShape(new Phaser.Geom.Line(200, 3400, 5800, 3400));
-      }
-
-      createPropertiesAndZones() {
-        this.interactables = [];
-
-        this.add.rectangle(1800, 1800, 320, 240, 0x1e293b).setStrokeStyle(4, 0x3b82f6);
-        this.add.rectangle(1800, 1800, 120, 100, 0x0f172a).setStrokeStyle(3, 0xe2e8f0);
-        this.add.text(1800, 1660, 'LAGOS CENTRAL POLICE HEADQUARTERS & CELL', { fontSize: '13px', color: '#38bdf8', backgroundColor: '#0f172a', padding: { x: 8, y: 4 } }).setOrigin(0.5);
-
-        const propertyList = [
-          { name: 'Lekki Luxury Apartment', x: 1200, y: 800, price: 1200000, type: 'property', state: 'Lagos' },
-          { name: 'Uyo Palm Beach Estate', x: 4200, y: 1400, price: 2100000, type: 'property', state: 'Akwa Ibom' },
-          { name: 'Abuja Duplex Safehouse', x: 3200, y: 800, price: 3500000, type: 'property', state: 'Abuja' },
-          { name: 'Ibadan Auto Repair Workshop', x: 2800, y: 2200, type: 'mechanic', state: 'Ibadan' },
-          { name: 'Naija Fashion Boutique', x: 1400, y: 600, type: 'clothes', cost: 15000, state: 'Lagos' },
-          { name: 'NaijaBet Sports Betting Shop', x: 2200, y: 600, type: 'betting', state: 'Lagos' },
-          { name: 'Danfo Transport Checkpoint', x: 800, y: 800, type: 'mission', reward: 45000, state: 'Lagos' }
-        ];
-
-        propertyList.forEach(p => {
-          let color = 0x3b82f6;
-          if (p.type === 'property') color = 0x22c55e;
-          if (p.type === 'mechanic') color = 0xeab308;
-          if (p.type === 'clothes') color = 0xa855f7;
-          if (p.type === 'betting') color = 0xf97316;
-          if (p.type === 'mission') color = 0xef4444;
-
-          const zone = this.add.rectangle(p.x, p.y, 140, 100, color, 0.4).setStrokeStyle(3, color);
-          this.add.text(p.x, p.y - 70, p.name, { fontSize: '13px', color: '#fff', backgroundColor: '#0f172a', padding: { x: 6, y: 3 } }).setOrigin(0.5);
-
-          this.interactables.push({ zone, data: p });
-        });
-      }
-
-      spawnNPCs() {
-        for (let i = 0; i < 15; i++) {
-          const civ = this.physics.add.sprite(800 + Math.random() * 2000, 600 + Math.random() * 2000, 'civ_tex');
-          this.civilians.add(civ);
-        }
-      }
-
-      spawnVehicles() {
-        const vehicleData = [
-          { x: 920, y: 600, type: 'Danfo Bus', color: 0xfacc15, speed: 280, isBike: false },
-          { x: 1100, y: 600, type: 'Okada Bike', color: 0xef4444, speed: 380, isBike: true },
-          { x: 1850, y: 1850, type: 'Police Cruiser', color: 0x1e3a8a, speed: 400, isBike: false, isPolice: true },
-          { x: 2900, y: 800, type: 'Lexus RX350', color: 0xe2e8f0, speed: 350, isBike: false }
-        ];
-
-        vehicleData.forEach(v => {
-          if (!v.isPolice) {
-            const g = this.make.graphics({ x: 0, y: 0, add: false });
-            g.fillStyle(v.color, 1);
-
-            if (v.isBike) g.fillRoundedRect(0, 0, 36, 16, 4);
-            else {
-              g.fillRoundedRect(0, 0, 56, 30, 6);
-              g.fillStyle(0x0f172a, 0.85);
-              g.fillRect(36, 4, 12, 22);
-            }
-            g.generateTexture('veh_' + v.type, v.isBike ? 36 : 56, v.isBike ? 16 : 30);
-          }
-
-          const veh = this.physics.add.sprite(v.x, v.y, 'veh_' + v.type);
-          veh.setData('props', v);
-          veh.setData('speedCurrent', 0);
-          veh.setData('health', 100);
-          this.vehicles.add(veh);
-        });
-      }
-
-      createHUD() {
-        this.hudText = this.add.text(20, 20, '', {
-          fontSize: '14px', color: '#38bdf8', backgroundColor: 'rgba(15, 23, 42, 0.9)', padding: { x: 12, y: 8 }
-        }).setScrollFactor(0).setDepth(20000);
-
-        this.updateHUDText();
-      }
-
-      updateHUDText() {
-        let starsStr = '';
-        for (let i = 0; i < userStats.wantedLevel; i++) starsStr += '* ';
-        if (starsStr === '') starsStr = 'CLEAN';
-
-        this.hudText.setText(
-          `CASH: N${userStats.cash.toLocaleString()}  |  STATE: ${userStats.current_state.toUpperCase()}  |  WANTED: [ ${starsStr} ]`
-        );
-      }
-
-      setupAnalogControls() {
-        this.moveAngle = null;
-        this.isGasPressed = false;
-        this.isBrakePressed = false;
-
-        const touchpad = document.getElementById('touch-touchpad');
-        const base = document.getElementById('analog-base');
-        const stick = document.getElementById('analog-stick');
-
-        let touchId = null;
-        let startX = 0, startY = 0;
-
-        touchpad.addEventListener('touchstart', (e) => {
-          e.preventDefault();
-          if (userStats.inJail || isGamePaused) return;
-
-          const t = e.changedTouches[0];
-          touchId = t.identifier;
-
-          if (gameSettings.joystickMode === 'fixed') {
-            startX = 100;
-            startY = window.innerHeight - 100;
-          } else {
-            startX = t.clientX;
-            startY = t.clientY;
-          }
-
-          base.style.display = 'block';
-          base.style.left = startX + 'px';
-          base.style.top = startY + 'px';
-          stick.style.transform = `translate(-50%, -50%)`;
-        }, { passive: false });
-
-        touchpad.addEventListener('touchmove', (e) => {
-          e.preventDefault();
-          if (userStats.inJail || isGamePaused) return;
-
-          for (let i = 0; i < e.changedTouches.length; i++) {
-            const t = e.changedTouches[i];
-            if (t.identifier === touchId) {
-              const dx = t.clientX - startX;
-              const dy = t.clientY - startY;
-              const dist = Math.min(Math.hypot(dx, dy), 45);
-              const angle = Math.atan2(dy, dx);
-
-              this.moveAngle = angle;
-
-              const stickX = Math.cos(angle) * dist;
-              const stickY = Math.sin(angle) * dist;
-              stick.style.transform = `translate(calc(-50% + ${stickX}px), calc(-50% + ${stickY}px))`;
-            }
-          }
-        }, { passive: false });
-
-        const resetAnalog = (e) => {
-          for (let i = 0; i < e.changedTouches.length; i++) {
-            if (e.changedTouches[i].identifier === touchId) {
-              touchId = null;
-              this.moveAngle = null;
-              base.style.display = 'none';
-            }
-          }
-        };
-
-        touchpad.addEventListener('touchend', resetAnalog);
-        touchpad.addEventListener('touchcancel', resetAnalog);
-
-        document.getElementById('btn-gas').addEventListener('pointerdown', () => { this.isGasPressed = true; });
-        document.getElementById('btn-gas').addEventListener('pointerup', () => { this.isGasPressed = false; });
-        document.getElementById('btn-brake').addEventListener('pointerdown', () => { this.isBrakePressed = true; });
-        document.getElementById('btn-brake').addEventListener('pointerup', () => { this.isBrakePressed = false; });
-
-        document.getElementById('btn-punch').addEventListener('pointerdown', () => this.punchAction());
-        document.getElementById('btn-sprint').addEventListener('pointerdown', () => { this.isSprinting = !this.isSprinting; });
-        document.getElementById('btn-enter').addEventListener('pointerdown', () => this.enterNearbyVehicle());
-        document.getElementById('btn-exit').addEventListener('pointerdown', () => this.exitVehicle());
-        document.getElementById('btn-action').addEventListener('pointerdown', () => this.triggerInteractable());
-      }
-
-      punchAction() {
-        this.addNotification("Attacked Pedestrian!");
-        this.triggerWantedLevel(1);
-      }
-
-      triggerWantedLevel(level) {
-        userStats.wantedLevel = Math.min(5, userStats.wantedLevel + level);
-        this.evadeTimer = 300;
-        this.updateHUDText();
-
-        if (this.policeGroup.getLength() < userStats.wantedLevel * 2) {
-          const cop = this.physics.add.sprite(this.player.x + 400, this.player.y + 400, 'police_tex');
-          this.policeGroup.add(cop);
-        }
-      }
-
-      handleGameTimers() {
-        if (userStats.inJail) {
-          userStats.jailTimeRemaining--;
-          document.getElementById('jail-timer').innerText = `00:${userStats.jailTimeRemaining < 10 ? '0' : ''}${userStats.jailTimeRemaining}`;
-
-          if (userStats.jailTimeRemaining <= 0) {
-            userStats.inJail = false;
-            document.getElementById('jail-overlay').style.display = 'none';
-            this.player.setPosition(1800, 1950);
-            this.addNotification("Released from Police Custody!");
-          }
-          return;
-        }
-
-        if (userStats.wantedLevel > 0) {
-          this.evadeTimer--;
-          if (this.evadeTimer <= 0) {
-            userStats.wantedLevel = 0;
-            this.updateHUDText();
-            this.addNotification("Evaded Law Enforcement!");
-          }
-        }
-      }
-
-      enterNearbyVehicle() {
-        if (!this.nearbyVehicle) return;
-
-        if (!this.nearbyVehicle.getData('props').isPolice) {
-          this.triggerWantedLevel(1);
-        }
-
-        this.addNotification(`Stealing ${this.nearbyVehicle.getData('props').type}...`);
-        this.time.delayedCall(400, () => {
-          userStats.inVehicle = true;
-          userStats.currentVehicle = this.nearbyVehicle;
-          this.player.setVisible(false);
-
-          document.getElementById('radio-widget').style.display = 'flex';
-          const stations = stateRadioStations[userStats.current_state] || stateRadioStations['Lagos'];
-          document.getElementById('radio-station-text').innerText = stations[currentRadioIndex];
-        });
-      }
-
-      exitVehicle() {
-        if (!userStats.inVehicle) return;
-        const v = userStats.currentVehicle;
-        this.player.setPosition(v.x + 40, v.y);
-        this.player.setVisible(true);
-        userStats.inVehicle = false;
-        userStats.currentVehicle = null;
-
-        document.getElementById('radio-widget').style.display = 'none';
-        this.addNotification("Exited Vehicle");
-      }
-
-      triggerInteractable() {
-        if (!this.activeInteractable) return;
-        const data = this.activeInteractable.data;
-
-        if (data.type === 'clothes') {
-          if (userStats.cash >= data.cost) {
-            userStats.cash -= data.cost;
-            userStats.outfit = 'Designer Agbada';
-            userStats.outfitColor = 0xa855f7;
-            this.updatePlayerTexture();
-            this.updateHUDText();
-            this.addNotification("Purchased & Equipped Designer Outfit!");
-          } else {
-            this.addNotification("Insufficient Cash for Outfit!");
-          }
-        } else if (data.type === 'betting') {
-          const won = Math.random() < 0.5;
-          if (won) {
-            userStats.cash += 50000;
-            this.addNotification("Betting Ticket Won! +N50,000");
-          } else {
-            userStats.cash = Math.max(0, userStats.cash - 25000);
-            this.addNotification("Betting Ticket Lost! -N25,000");
-          }
-          this.updateHUDText();
-        } else if (data.type === 'property') {
-          if (userStats.cash >= data.price) {
-            userStats.cash -= data.price;
-            userStats.properties.push(data.name);
-            this.updateHUDText();
-            this.addNotification(`Purchased ${data.name}!`);
-          }
-        } else if (data.type === 'mechanic') {
-          if (userStats.inVehicle) {
-            userStats.cash = Math.max(0, userStats.cash - 15000);
-            userStats.currentVehicle.setData('health', 100);
-            this.updateHUDText();
-            this.addNotification("Vehicle Repaired & Serviced!");
-          }
-        } else if (data.type === 'mission') {
-          userStats.cash += data.reward;
-          this.updateHUDText();
-          this.addNotification(`Mission Passed! Earned N${data.reward.toLocaleString()}`);
-        }
-      }
-
-      arrestPlayer() {
-        if (userStats.inJail) return;
-
-        userStats.inJail = true;
-        userStats.wantedLevel = 0;
-        userStats.jailTimeRemaining = 15;
-        this.updateHUDText();
-
-        if (userStats.inVehicle) this.exitVehicle();
-
-        this.player.setPosition(1800, 1800);
-        document.getElementById('jail-overlay').style.display = 'flex';
-        this.addNotification("ARRESTED BY LAGOS POLICE!");
-      }
-
-      addNotification(msg) {
-        const text = this.add.text(640, 160, msg, { fontSize: '18px', color: '#ef4444', backgroundColor: '#0f172a', padding: { x: 12, y: 6 } })
-          .setOrigin(0.5).setScrollFactor(0).setDepth(30000);
-        this.tweens.add({ targets: text, alpha: 0, y: 120, duration: 1800, onComplete: () => text.destroy() });
-      }
-
-      update() {
-        if (userStats.inJail || isGamePaused) return;
-
-        // Interaction Check
-        this.activeInteractable = null;
-        this.interactables.forEach(item => {
-          if (Phaser.Math.Distance.Between(this.player.x, this.player.y, item.zone.x, item.zone.y) < 90) {
-            this.activeInteractable = item;
-            if (item.data.state && item.data.state !== userStats.current_state) {
-              userStats.current_state = item.data.state;
-              this.updateHUDText();
-            }
-          }
-        });
-
-        // Vehicle Proximity Check
-        this.nearbyVehicle = null;
-        if (!userStats.inVehicle) {
-          this.vehicles.children.iterate(v => {
-            if (Phaser.Math.Distance.Between(this.player.x, this.player.y, v.x, v.y) < 70) {
-              this.nearbyVehicle = v;
-            }
-          });
-        }
-
-        // Police Chase Logic
-        this.policeGroup.children.iterate(cop => {
-          if (userStats.wantedLevel > 0) {
-            this.physics.moveToObject(cop, this.player, 210);
-            cop.rotation = Phaser.Math.Angle.Between(cop.x, cop.y, this.player.x, this.player.y);
-
-            if (Phaser.Math.Distance.Between(cop.x, cop.y, this.player.x, this.player.y) < 35) {
-              this.arrestPlayer();
-            }
-          } else {
-            cop.body.setVelocity(0, 0);
-          }
-        });
-
-        // Toggle UI Controls
-        document.getElementById('btn-enter').style.display = (this.nearbyVehicle && !userStats.inVehicle) ? 'flex' : 'none';
-        document.getElementById('btn-action').style.display = (this.activeInteractable) ? 'flex' : 'none';
-        document.getElementById('btn-exit').style.display = userStats.inVehicle ? 'flex' : 'none';
-        document.getElementById('btn-gas').style.display = userStats.inVehicle ? 'flex' : 'none';
-        document.getElementById('btn-brake').style.display = userStats.inVehicle ? 'flex' : 'none';
-        document.getElementById('btn-punch').style.display = !userStats.inVehicle ? 'flex' : 'none';
-        document.getElementById('btn-sprint').style.display = !userStats.inVehicle ? 'flex' : 'none';
-
-        // Driving/On Foot Movement Physics
-        if (userStats.inVehicle) {
-          const veh = userStats.currentVehicle;
-          const props = veh.getData('props');
-          let currentSpeed = veh.getData('speedCurrent') || 0;
-
-          if (this.isGasPressed) currentSpeed = Math.min(props.speed, currentSpeed + (props.isBike ? 12 : 8));
-          else if (this.isBrakePressed) currentSpeed = Math.max(-100, currentSpeed - 14);
-          else currentSpeed *= 0.96;
-
-          veh.setData('speedCurrent', currentSpeed);
-
-          if (this.moveAngle !== null && Math.abs(currentSpeed) > 10) {
-            const turnRate = props.isBike ? 0.08 : 0.05;
-            veh.rotation = Phaser.Math.Angle.RotateTo(veh.rotation, this.moveAngle, turnRate);
-          }
-
-          veh.body.setVelocity(
-            Math.cos(veh.rotation) * currentSpeed,
-            Math.sin(veh.rotation) * currentSpeed
-          );
-
-          this.player.setPosition(veh.x, veh.y);
-        } else {
-          const speed = this.isSprinting ? 300 : 170;
-          if (this.moveAngle !== null) {
-            this.player.body.setVelocity(
-              Math.cos(this.moveAngle) * speed,
-              Math.sin(this.moveAngle) * speed
-            );
-            this.player.rotation = this.moveAngle;
-          } else {
-            this.player.body.setVelocity(0, 0);
-          }
-        }
-      }
-    }
-  </script>
+  <!-- Game Logic Scripts -->
+  <script src="js/systems/combat.js"></script>
+  <script src="js/systems/ai.js"></script>
+  <script src="js/scenes/WorldScene3D.js"></script>
+  <script src="js/config3d.js"></script>
 </body>
 </html>
