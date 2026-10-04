@@ -4,6 +4,22 @@ const path = require('path');
 
 const PORT = process.env.PORT || 10000;
 
+// LOG ALL FILES ON STARTUP
+console.log("=== ROOT DIRECTORY CONTENTS (__dirname) ===");
+try {
+  console.log(fs.readdirSync(__dirname));
+} catch (e) {
+  console.log("Error reading __dirname:", e);
+}
+
+console.log("=== PUBLIC FOLDER CONTENTS ===");
+try {
+  const publicPath = path.join(__dirname, 'public');
+  console.log(fs.readdirSync(publicPath));
+} catch (e) {
+  console.log("Error reading public folder:", e.message);
+}
+
 const MIME_TYPES = {
   '.html': 'text/html',
   '.js': 'text/javascript',
@@ -14,36 +30,27 @@ const MIME_TYPES = {
   '.ico': 'image/x-icon'
 };
 
-function serveFile(res, filePath, contentType) {
-  fs.readFile(filePath, (err, content) => {
-    if (err) {
-      // Try root directory if public/ failed
-      const altPath = path.join(__dirname, path.basename(filePath));
-      fs.readFile(altPath, (altErr, altContent) => {
-        if (altErr) {
-          res.writeHead(404, { 'Content-Type': 'text/plain' });
-          res.end(`File not found: ${path.basename(filePath)}`);
-        } else {
-          res.writeHead(200, { 'Content-Type': contentType });
-          res.end(altContent, 'utf-8');
-        }
-      });
-    } else {
-      res.writeHead(200, { 'Content-Type': contentType });
-      res.end(content, 'utf-8');
-    }
-  });
-}
-
 const server = http.createServer((req, res) => {
   let reqPath = req.url.split('?')[0];
-  let safePath = reqPath === '/' ? 'index.html' : reqPath.replace(/^\/+/, '');
-  let filePath = path.join(__dirname, 'public', safePath);
+  let cleanName = reqPath === '/' ? 'index.html' : reqPath.replace(/^\/+/, '');
+  
+  // Search order: public/file -> root/file
+  let possiblePaths = [
+    path.join(__dirname, 'public', cleanName),
+    path.join(__dirname, cleanName)
+  ];
 
-  let extname = String(path.extname(safePath)).toLowerCase();
-  let contentType = MIME_TYPES[extname] || 'application/octet-stream';
+  let foundPath = possiblePaths.find(p => fs.existsSync(p) && !fs.statSync(p).isDirectory());
 
-  serveFile(res, filePath, contentType);
+  if (foundPath) {
+    let extname = String(path.extname(foundPath)).toLowerCase();
+    let contentType = MIME_TYPES[extname] || 'application/octet-stream';
+    res.writeHead(200, { 'Content-Type': contentType });
+    fs.createReadStream(foundPath).pipe(res);
+  } else {
+    res.writeHead(404, { 'Content-Type': 'text/plain' });
+    res.end(`File not found: ${cleanName}. Checked paths: ${possiblePaths.join(' AND ')}`);
+  }
 });
 
 server.listen(PORT, () => {
