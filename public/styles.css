@@ -1,7 +1,7 @@
 * {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
   user-select: none;
   -webkit-user-select: none;
 }
@@ -10,42 +10,103 @@ body, html {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background-color: #000;
-  font-family: Arial, sans-serif;
+  background-color: #050811;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 #game-container {
   width: 100vw;
   height: 100vh;
-  position: relative;
-}
-
-/* Loading Overlay */
-#loader-overlay {
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background: #111;
+  z-index: 1;
+}
+
+/* Portrait Screen Lock */
+#orientation-warning {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: #000000;
+  z-index: 999999;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  text-align: center;
+  padding: 20px;
+}
+
+#orientation-warning p {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-top: 15px;
+}
+
+#orientation-warning span {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin-top: 5px;
+}
+
+@media screen and (orientation: portrait) {
+  #orientation-warning {
+    display: flex !important;
+  }
+}
+
+/* Fullscreen Centered Loading Overlay */
+#loader-overlay {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
+  z-index: 50000;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-  z-index: 1000;
-  color: #fff;
+  justify-content: center;
+  padding: 24px;
 }
 
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #333;
-  border-top: 4px solid #27ae60;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
+.loader-title {
+  color: #38bdf8;
+  font-size: 1.6rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  text-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+  margin-bottom: 8px;
+  text-align: center;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.loader-subtitle {
+  color: #94a3b8;
+  font-size: 0.85rem;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.loader-bar-bg {
+  width: 280px;
+  max-width: 80%;
+  height: 10px;
+  background: #1e293b;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid #334155;
+}
+
+.loader-bar-fill {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #0284c7, #38bdf8);
+  border-radius: 20px;
+  transition: width 0.15s ease-out;
+}
+
+.loader-status {
+  color: #64748b;
+  font-size: 0.75rem;
+  margin-top: 12px;
+  font-weight: 600;
 }
