@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Nigeria Action World</title>
-  <meta name="theme-color" content="#0f172a" />
+  <meta name="theme-color" content="#050811" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   
@@ -13,140 +13,165 @@
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; touch-action: none; }
-    body, html { width: 100%; height: 100%; overflow: hidden; background-color: #000; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body, html { width: 100%; height: 100%; overflow: hidden; background-color: #050811; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     #game-container { width: 100vw; height: 100vh; position: relative; }
 
-    /* Landscape Guard Overlay */
+    /* Animated CSS Device Rotation Bar */
     #orientation-warning {
-      display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: #090d16; color: #fff; z-index: 99999; flex-direction: column;
-      align-items: center; justify-content: center; text-align: center; padding: 24px;
+      display: none; position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.95); border: 1px solid #38bdf8; color: #fff;
+      padding: 8px 18px; border-radius: 20px; z-index: 99999; font-size: 0.8rem;
+      align-items: center; gap: 10px; box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
     }
-    #orientation-warning h2 { color: #38bdf8; font-size: 1.8rem; margin-bottom: 12px; }
-    #orientation-warning p { color: #94a3b8; font-size: 1.1rem; max-width: 380px; }
-    @media screen and (orientation: portrait) {
-      #orientation-warning { display: flex; }
+    .phone-icon {
+      width: 18px; height: 30px; border: 2px solid #38bdf8; border-radius: 4px;
+      animation: rotatePhone 2.5s infinite ease-in-out;
     }
+    @keyframes rotatePhone {
+      0%, 10% { transform: rotate(0deg); }
+      40%, 60% { transform: rotate(-90deg); }
+      90%, 100% { transform: rotate(0deg); }
+    }
+    @media screen and (orientation: portrait) { #orientation-warning { display: flex; } }
 
-    /* Supabase Auth Modal */
+    /* Top Navigation Utility Bar */
+    #top-bar {
+      position: fixed; top: 12px; right: 16px; z-index: 40000; display: flex; gap: 10px; align-items: center;
+    }
+    .top-btn {
+      background: rgba(15, 23, 42, 0.85); color: #38bdf8; border: 1px solid #334155;
+      padding: 8px 16px; border-radius: 8px; font-size: 0.8rem; font-weight: bold; cursor: pointer;
+      backdrop-filter: blur(6px); display: flex; align-items: center; gap: 6px; transition: all 0.2s;
+    }
+    .top-btn:active { transform: scale(0.95); background: #38bdf8; color: #000; }
+
+    /* Auth Modal */
     #auth-overlay {
-      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(15, 23, 42, 0.92); z-index: 50000; display: flex;
-      align-items: center; justify-content: center; backdrop-filter: blur(8px);
+      display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(5, 8, 17, 0.85); z-index: 50000; align-items: center; justify-content: center; backdrop-filter: blur(8px);
     }
     .auth-card {
-      background: #1e293b; color: #fff; width: 92%; max-width: 420px;
-      padding: 28px; border-radius: 16px; border: 1px solid #334155; text-align: center;
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+      background: #0f172a; color: #fff; width: 90%; max-width: 360px; padding: 22px;
+      border-radius: 14px; border: 1px solid #334155; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.6);
     }
-    .auth-card h2 { margin-bottom: 8px; font-size: 1.6rem; color: #38bdf8; letter-spacing: 1px; }
-    .auth-card p.subtitle { color: #94a3b8; font-size: 0.85rem; margin-bottom: 20px; }
+    .auth-card h3 { font-size: 1.2rem; color: #38bdf8; margin-bottom: 4px; letter-spacing: 0.5px; }
+    .auth-card p.subtitle { color: #94a3b8; font-size: 0.75rem; margin-bottom: 14px; }
     .auth-input {
-      width: 100%; padding: 14px; margin-bottom: 14px; border-radius: 8px;
-      border: 1px solid #475569; background: #0f172a; color: #fff; font-size: 1rem; outline: none;
+      width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 6px;
+      border: 1px solid #334155; background: #1e293b; color: #fff; font-size: 0.85rem; outline: none;
     }
-    .auth-input:focus { border-color: #38bdf8; }
-    .auth-btn {
-      width: 100%; padding: 14px; border-radius: 8px; border: none;
-      background: #22c55e; color: #fff; font-weight: bold; font-size: 1.05rem;
-      cursor: pointer; margin-bottom: 12px; transition: background 0.2s;
+    .auth-btn-small {
+      width: 100%; padding: 10px; border-radius: 6px; border: none;
+      background: #22c55e; color: #fff; font-weight: bold; font-size: 0.85rem; cursor: pointer; margin-bottom: 8px;
     }
-    .auth-btn:active { background: #16a34a; }
-    .auth-status { font-size: 0.85rem; color: #ef4444; margin-bottom: 12px; min-height: 18px; }
-    .auth-toggle { color: #38bdf8; font-size: 0.9rem; cursor: pointer; text-decoration: underline; }
+    .auth-status { font-size: 0.75rem; color: #ef4444; margin-bottom: 8px; min-height: 16px; }
 
-    /* Dealership Modal */
-    #dealership-modal {
+    /* Cookie Consent Banner */
+    #cookie-banner {
+      position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 520px;
+      background: rgba(15, 23, 42, 0.92); border: 1px solid #334155; border-radius: 10px; padding: 10px 16px;
+      z-index: 45000; display: flex; align-items: center; justify-content: space-between; gap: 12px; backdrop-filter: blur(6px);
+    }
+    #cookie-banner p { color: #94a3b8; font-size: 0.72rem; }
+    .cookie-btn { background: #38bdf8; color: #000; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; font-size: 0.75rem; cursor: pointer; }
+
+    /* Jail Overlay Screen */
+    #jail-overlay {
       display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(0,0,0,0.85); z-index: 40000; align-items: center; justify-content: center;
+      background: rgba(15, 23, 42, 0.75); z-index: 60000; flex-direction: column;
+      align-items: center; justify-content: center; backdrop-filter: blur(4px); color: #fff;
     }
-    .dealership-card {
-      background: #1e293b; color: #fff; width: 90%; max-width: 500px;
-      padding: 24px; border-radius: 16px; border: 1px solid #334155; text-align: center;
-    }
-    .car-list { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
-    .car-item {
-      background: #0f172a; padding: 12px; border-radius: 8px; border: 1px solid #334155;
-      display: flex; flex-direction: column; align-items: center; justify-content: space-between;
-    }
-    .car-item h4 { color: #38bdf8; margin-bottom: 4px; font-size: 0.95rem; }
-    .car-item p { color: #22c55e; font-size: 0.85rem; font-weight: bold; margin-bottom: 8px; }
-    .buy-btn {
-      padding: 6px 12px; background: #38bdf8; border: none; color: #000; font-weight: bold;
-      border-radius: 4px; cursor: pointer; width: 100%;
-    }
+    #jail-overlay h1 { color: #ef4444; font-size: 2.2rem; letter-spacing: 2px; margin-bottom: 10px; text-transform: uppercase; }
+    #jail-timer { font-size: 3rem; font-weight: bold; color: #facc15; font-family: monospace; }
 
-    /* On-Screen Touch Controls Overlay */
+    /* Dynamic Touch Controls */
     #controls-layer {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      pointer-events: none; z-index: 10000; display: flex; justify-content: space-between; padding: 20px;
+      pointer-events: none; z-index: 10000;
     }
+    #touch-touchpad { position: absolute; top: 0; left: 0; width: 60%; height: 100%; pointer-events: auto; }
+    
+    /* Dynamic Floating Analog Joystick */
+    #analog-base {
+      display: none; position: absolute; width: 110px; height: 110px; border-radius: 50%;
+      background: rgba(255, 255, 255, 0.12); border: 2px solid rgba(255, 255, 255, 0.25);
+      transform: translate(-50%, -50%); pointer-events: none; backdrop-filter: blur(2px);
+    }
+    #analog-stick {
+      position: absolute; top: 50%; left: 50%; width: 48px; height: 48px; border-radius: 50%;
+      background: rgba(56, 189, 248, 0.8); border: 2px solid #ffffff;
+      transform: translate(-50%, -50%); pointer-events: none; box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+    }
+
+    /* Action Buttons Overlay */
+    #action-buttons { position: absolute; bottom: 24px; right: 24px; display: flex; gap: 12px; pointer-events: auto; }
     .touch-btn {
-      pointer-events: auto; width: 72px; height: 72px; border-radius: 50%;
-      background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255,255,255,0.5);
-      color: white; font-weight: bold; font-size: 0.9rem; display: flex; align-items: center;
-      justify-content: center; backdrop-filter: blur(4px); box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      width: 62px; height: 62px; border-radius: 50%;
+      background: rgba(15, 23, 42, 0.7); border: 2px solid rgba(255,255,255,0.3);
+      color: #fff; font-weight: bold; font-size: 0.7rem; display: flex; align-items: center;
+      justify-content: center; backdrop-filter: blur(4px); box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+      transition: transform 0.1s;
     }
-    .touch-btn:active { background: rgba(56, 189, 248, 0.6); transform: scale(0.95); }
-    #action-buttons { position: absolute; bottom: 30px; right: 30px; display: flex; gap: 16px; }
-    #joystick-zone { position: absolute; bottom: 30px; left: 30px; width: 140px; height: 140px; pointer-events: auto; }
+    .touch-btn:active { transform: scale(0.9); background: rgba(56, 189, 248, 0.8); color: #000; }
   </style>
 </head>
 <body>
 
-  <!-- Landscape Orientation Warning -->
+  <!-- Dynamic Device Orientation Warning -->
   <div id="orientation-warning">
-    <h2>🔄 ROTATE YOUR DEVICE</h2>
-    <p>Nigeria Action World is built for Landscape view. Please turn your mobile device sideways to continue playing.</p>
+    <div class="phone-icon"></div>
+    <span>Rotate device for seamless open-world gameplay</span>
   </div>
 
-  <!-- Supabase Login Overlay -->
+  <!-- Top Navigation Utility Bar -->
+  <div id="top-bar">
+    <button class="top-btn" id="btn-auth-trigger" onclick="openAuthModal()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+      Account Sync
+    </button>
+  </div>
+
+  <!-- Jail Overlay HUD -->
+  <div id="jail-overlay">
+    <h1>ARRESTED & DETAINED</h1>
+    <p>Serving time in cell for offences committed</p>
+    <div id="jail-timer">00:15</div>
+  </div>
+
+  <!-- Auth Modal -->
   <div id="auth-overlay">
     <div class="auth-card">
-      <h2>NIGERIA ACTION WORLD</h2>
-      <p class="subtitle">Open World Mobile Action Game</p>
+      <h3>NIGERIA ACTION WORLD</h3>
+      <p class="subtitle">Log in to save real estate, personal vehicles & balance</p>
       <input type="email" id="auth-email" class="auth-input" placeholder="Email Address" />
       <input type="password" id="auth-password" class="auth-input" placeholder="Password" />
-      <button id="auth-submit" class="auth-btn">Log In / Play</button>
+      <button id="auth-submit" class="auth-btn-small">Sign In / Register</button>
       <div id="auth-status" class="auth-status"></div>
-      <p class="auth-toggle" onclick="toggleAuthMode()">Switch between Login and Sign Up</p>
+      <p style="color:#38bdf8; font-size:0.75rem; cursor:pointer;" onclick="closeAuthModal()">Continue Playing as Guest</p>
     </div>
   </div>
 
-  <!-- Vehicle Showroom Modal -->
-  <div id="dealership-modal">
-    <div class="dealership-card">
-      <h3 style="color:#38bdf8;">NIGERIA AUTO DEALERSHIP</h3>
-      <p style="font-size:0.85rem; color:#94a3b8; margin-top:4px;">Purchase high-speed luxury rides</p>
-      <div class="car-list">
-        <div class="car-item">
-          <h4>Honda Accord</h4>
-          <p>₦500,000</p>
-          <button class="buy-btn" onclick="buyVehicle('honda', 500000)">Buy</button>
-        </div>
-        <div class="car-item">
-          <h4>Lexus RX350</h4>
-          <p>₦1,500,000</p>
-          <button class="buy-btn" onclick="buyVehicle('lexus', 1500000)">Buy</button>
-        </div>
-        <div class="car-item">
-          <h4>Lamborghini</h4>
-          <p>₦5,000,000</p>
-          <button class="buy-btn" onclick="buyVehicle('lamborghini', 5000000)">Buy</button>
-        </div>
-      </div>
-      <button class="auth-btn" style="background:#64748b; margin-top:8px;" onclick="closeDealership()">Close Garage</button>
-    </div>
+  <!-- Cookie Compliance Banner -->
+  <div id="cookie-banner">
+    <p>We use browser storage to maintain your active game session and player state automatically.</p>
+    <button class="cookie-btn" onclick="acceptCookies()">Accept</button>
   </div>
 
   <div id="game-container"></div>
 
-  <!-- On-Screen Virtual Controls -->
+  <!-- Dynamic Touch Controls Overlay -->
   <div id="controls-layer">
-    <div id="joystick-zone"></div>
+    <div id="touch-touchpad"></div>
+    <div id="analog-base"><div id="analog-stick"></div></div>
+    
     <div id="action-buttons">
-      <div id="btn-drive" class="touch-btn">DRIVE</div>
-      <div id="btn-fire" class="touch-btn" style="background: rgba(239, 68, 68, 0.4);">FIRE</div>
+      <div id="btn-punch" class="touch-btn">PUNCH</div>
+      <div id="btn-sprint" class="touch-btn">SPRINT</div>
+      <div id="btn-action" class="touch-btn" style="display:none; background: rgba(34, 197, 94, 0.7);">ACTION</div>
+      <div id="btn-enter" class="touch-btn" style="display:none; background: rgba(56, 189, 248, 0.7);">STEAL/ENTER</div>
+      <div id="btn-gas" class="touch-btn" style="display:none; background: rgba(34, 197, 94, 0.7);">GAS</div>
+      <div id="btn-brake" class="touch-btn" style="display:none; background: rgba(239, 68, 68, 0.7);">BRAKE</div>
+      <div id="btn-exit" class="touch-btn" style="display:none; background: rgba(239, 68, 68, 0.7);">EXIT</div>
     </div>
   </div>
 
@@ -155,21 +180,27 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRobHRueWVsdWJlYmRxaGtmeHVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTExMDE1MTUsImV4cCI6MjEwNjY3NzUxNX0.dXaaMyyMBWlpN5Rg0rlCIpNqly_EsnqwhIR7AlAdDuo";
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    let isSignUp = false;
     let currentUser = null;
     let gameInstance = null;
+    let activeScene = null;
 
     let userStats = {
       health: 100,
-      cash: 50000,
+      cash: 250000,
       current_state: 'Lagos',
-      current_mission: 'Transport passengers from Lagos to Ibadan Bukka'
+      outfit: 'Civilian Casual',
+      outfitColor: 0x38bdf8,
+      wantedLevel: 0,
+      inJail: false,
+      jailTimeRemaining: 0,
+      properties: [],
+      inVehicle: false,
+      currentVehicle: null
     };
 
-    function toggleAuthMode() {
-      isSignUp = !isSignUp;
-      document.getElementById('auth-submit').innerText = isSignUp ? 'Sign Up' : 'Log In / Play';
-    }
+    function openAuthModal() { document.getElementById('auth-overlay').style.display = 'flex'; }
+    function closeAuthModal() { document.getElementById('auth-overlay').style.display = 'none'; }
+    function acceptCookies() { document.getElementById('cookie-banner').style.display = 'none'; }
 
     document.getElementById('auth-submit').addEventListener('click', async () => {
       const email = document.getElementById('auth-email').value;
@@ -177,28 +208,28 @@
       const status = document.getElementById('auth-status');
 
       if (!email || !password) { status.innerText = "Please complete all fields."; return; }
-      status.innerText = "Connecting to database...";
+      status.innerText = "Syncing...";
 
-      if (isSignUp) {
-        const { data, error } = await supabaseClient.auth.signUp({ email, password });
-        if (error) status.innerText = error.message;
-        else { status.innerText = "Account registered! Logging in..."; loginSuccess(data.user); }
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) {
+        const signUp = await supabaseClient.auth.signUp({ email, password });
+        if (signUp.error) status.innerText = signUp.error.message;
+        else loginSuccess(signUp.data.user);
       } else {
-        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-        if (error) status.innerText = error.message;
-        else loginSuccess(data.user);
+        loginSuccess(data.user);
       }
     });
 
     async function loginSuccess(user) {
       currentUser = user;
-      document.getElementById('auth-overlay').style.display = 'none';
+      document.getElementById('btn-auth-trigger').innerText = "Account Synced";
+      closeAuthModal();
 
       const { data } = await supabaseClient.from('profiles').select('*').eq('id', user.id).single();
       if (data) userStats = Object.assign(userStats, data);
-
-      initGame();
     }
+
+    window.onload = () => { initGame(); };
 
     function initGame() {
       const config = {
@@ -223,238 +254,503 @@
       constructor() { super({ key: 'NigeriaWorldScene' }); }
 
       create() {
+        activeScene = this;
         this.cameras.main.setBounds(0, 0, 6000, 4000);
         this.physics.world.setBounds(0, 0, 6000, 4000);
 
-        // Terrain Background
-        this.add.rectangle(3000, 2000, 6000, 4000, 0x1b4332);
-
-        // State Expressways & Roads
+        // Terrain & Roads
+        this.add.rectangle(3000, 2000, 6000, 4000, 0x152117);
         this.createRoads();
 
-        // Points of Interest
-        this.createPOIs();
+        // Real Estate, Shops, Police Station & Cells
+        this.createPropertiesAndZones();
 
-        // Player & Vehicles
-        this.player = this.physics.add.sprite(800, 600, null);
-        this.createPlayerTexture();
-        this.player.setTexture('player_tex');
+        // Player Unit
+        this.updatePlayerTexture();
+        this.player = this.physics.add.sprite(800, 600, 'player_tex');
         this.player.setCollideWorldBounds(true);
+        this.isSprinting = false;
 
+        // Civilians & Police Units
+        this.civilians = this.physics.add.group();
+        this.policeGroup = this.physics.add.group();
+        this.spawnNPCs();
+
+        // Vehicles Group
         this.vehicles = this.physics.add.group();
         this.spawnVehicles();
 
-        this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
+        this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
 
-        // HUD Setup
+        // Dynamic Weather & Police Timer Engine
+        this.setupWeatherEngine();
         this.createHUD();
+        this.setupAnalogControls();
 
-        // Touch Control Inputs
-        this.setupTouchControls();
-
-        // Nigeria Time Ambient Light Engine
+        // Evade Timer & Time System
+        this.evadeTimer = 0;
+        this.time.addEvent({ delay: 1000, callback: this.handleGameTimers, callbackScope: this, loop: true });
         this.time.addEvent({ delay: 5000, callback: this.updateTimeAndWeather, callbackScope: this, loop: true });
         this.updateTimeAndWeather();
       }
 
-      createPlayerTexture() {
+      updatePlayerTexture() {
+        if (this.textures.exists('player_tex')) this.textures.remove('player_tex');
         const g = this.make.graphics({ x: 0, y: 0, add: false });
-        g.fillStyle(0x38bdf8, 1);
-        g.fillCircle(16, 16, 16);
-        g.fillStyle(0x000000, 1);
+        g.fillStyle(userStats.outfitColor, 1);
+        g.fillCircle(16, 16, 14);
+        g.fillStyle(0x0f172a, 1);
         g.fillCircle(22, 16, 4);
         g.generateTexture('player_tex', 32, 32);
+
+        if (this.player) this.player.setTexture('player_tex');
       }
 
       createRoads() {
         const g = this.add.graphics();
-        g.lineStyle(120, 0x334155, 1);
-
-        // East-West Trans-Nigeria Highway
+        g.lineStyle(150, 0x1e293b, 1);
         g.strokeLineShape(new Phaser.Geom.Line(200, 600, 5800, 600));
         g.strokeLineShape(new Phaser.Geom.Line(200, 2000, 5800, 2000));
         g.strokeLineShape(new Phaser.Geom.Line(200, 3400, 5800, 3400));
-
-        // North-South Connecting Highways
         g.strokeLineShape(new Phaser.Geom.Line(1000, 200, 1000, 3800));
         g.strokeLineShape(new Phaser.Geom.Line(3000, 200, 3000, 3800));
-        g.strokeLineShape(new Phaser.Geom.Line(5000, 200, 5000, 3800));
+
+        g.lineStyle(4, 0xfacc15, 0.8);
+        g.strokeLineShape(new Phaser.Geom.Line(200, 600, 5800, 600));
+        g.strokeLineShape(new Phaser.Geom.Line(200, 2000, 5800, 2000));
+        g.strokeLineShape(new Phaser.Geom.Line(200, 3400, 5800, 3400));
       }
 
-      createPOIs() {
-        const pois = [
-          { name: 'Balogun Market (Lagos)', x: 800, y: 800, color: 0xeab308 },
-          { name: 'Dugbe Bukka (Oyo)', x: 2800, y: 800, color: 0xf97316 },
-          { name: 'Abuja City Mall (FCT)', x: 4800, y: 800, color: 0x3b82f6 },
-          { name: 'Kano Central Mosque (Kano)', x: 4800, y: 2200, color: 0x22c55e },
-          { name: 'Port Harcourt Refinery (Rivers)', x: 2800, y: 3200, color: 0xef4444 },
-          { name: 'Uyo Auto Repair (Akwa Ibom)', x: 800, y: 3200, color: 0xa855f7 }
+      createPropertiesAndZones() {
+        this.interactables = [];
+
+        // Police Station Base & Visible Cell Structure
+        this.add.rectangle(1800, 1800, 320, 240, 0x1e293b).setStrokeStyle(4, 0x3b82f6);
+        this.add.rectangle(1800, 1800, 120, 100, 0x0f172a).setStrokeStyle(3, 0xe2e8f0); // Police Cell Bars
+        this.add.text(1800, 1660, 'LAGOS CENTRAL POLICE HEADQUARTERS & CELL', { fontSize: '13px', color: '#38bdf8', backgroundColor: '#0f172a', padding: { x: 8, y: 4 } }).setOrigin(0.5);
+
+        const propertyList = [
+          { name: 'Lekki Luxury Apartment', x: 1200, y: 800, price: 1200000, type: 'property' },
+          { name: 'Abuja Duplex Safehouse', x: 3200, y: 800, price: 3500000, type: 'property' },
+          { name: 'Ibadan Auto Repair Workshop', x: 2800, y: 2200, type: 'mechanic' },
+          { name: 'Naija Fashion Boutique', x: 1400, y: 600, type: 'clothes', cost: 15000 },
+          { name: 'NaijaBet Sports Betting Shop', x: 2200, y: 600, type: 'betting' },
+          { name: 'Danfo Transport Mission Checkpoint', x: 800, y: 800, type: 'mission', reward: 45000 }
         ];
 
-        pois.forEach(p => {
-          this.add.rectangle(p.x, p.y, 160, 120, p.color, 0.8).setStrokeStyle(4, 0xffffff);
-          this.add.text(p.x, p.y - 80, p.name, { fontSize: '16px', color: '#fff', backgroundColor: '#000' }).setOrigin(0.5);
+        propertyList.forEach(p => {
+          let color = 0x3b82f6;
+          if (p.type === 'property') color = 0x22c55e;
+          if (p.type === 'mechanic') color = 0xeab308;
+          if (p.type === 'clothes') color = 0xa855f7;
+          if (p.type === 'betting') color = 0xf97316;
+          if (p.type === 'mission') color = 0xef4444;
+
+          const zone = this.add.rectangle(p.x, p.y, 140, 100, color, 0.4).setStrokeStyle(3, color);
+          this.add.text(p.x, p.y - 70, p.name, { fontSize: '13px', color: '#fff', backgroundColor: '#0f172a', padding: { x: 6, y: 3 } }).setOrigin(0.5);
+
+          this.interactables.push({ zone, data: p });
         });
       }
 
+      spawnNPCs() {
+        // Create Civilian Texture
+        const cg = this.make.graphics({ x: 0, y: 0, add: false });
+        cg.fillStyle(0x10b981, 1);
+        cg.fillCircle(12, 12, 10);
+        cg.generateTexture('civ_tex', 24, 24);
+
+        // Create Police Officer Texture
+        const pg = this.make.graphics({ x: 0, y: 0, add: false });
+        pg.fillStyle(0x1e3a8a, 1); // Dark Police Blue
+        pg.fillCircle(14, 14, 12);
+        pg.fillStyle(0xef4444, 1); // Badge/Cap detail
+        pg.fillCircle(18, 14, 3);
+        pg.generateTexture('police_tex', 28, 28);
+
+        // Spawn Wandering Civilians
+        for (let i = 0; i < 15; i++) {
+          const civ = this.physics.add.sprite(800 + Math.random() * 2000, 600 + Math.random() * 2000, 'civ_tex');
+          this.civilians.add(civ);
+        }
+      }
+
       spawnVehicles() {
+        // Police Patrol Cruiser Texture
+        const polG = this.make.graphics({ x: 0, y: 0, add: false });
+        polG.fillStyle(0x0f172a, 1);
+        polG.fillRoundedRect(0, 0, 56, 28, 4);
+        polG.fillStyle(0x38bdf8, 1);
+        polG.fillRect(20, 0, 16, 28);
+        polG.fillStyle(0xef4444, 1); polG.fillRect(26, 4, 4, 8); // Red Light
+        polG.fillStyle(0x3b82f6, 1); polG.fillRect(26, 16, 4, 8); // Blue Light
+        polG.generateTexture('veh_Police Cruiser', 56, 28);
+
         const vehicleData = [
-          { x: 900, y: 600, type: 'Danfo Bus', color: 0xfacc15 },
-          { x: 1100, y: 600, type: 'Keke Napep', color: 0x22c55e },
-          { x: 2900, y: 800, type: 'Honda Accord', color: 0x94a3b8 }
+          { x: 920, y: 600, type: 'Danfo Bus', color: 0xfacc15, speed: 280, isBike: false },
+          { x: 1100, y: 600, type: 'Okada Bike', color: 0xef4444, speed: 380, isBike: true },
+          { x: 1850, y: 1850, type: 'Police Cruiser', color: 0x1e3a8a, speed: 400, isBike: false, isPolice: true },
+          { x: 2900, y: 800, type: 'Lexus RX350', color: 0xe2e8f0, speed: 350, isBike: false }
         ];
 
         vehicleData.forEach(v => {
-          const g = this.make.graphics({ x: 0, y: 0, add: false });
-          g.fillStyle(v.color, 1);
-          g.fillRect(0, 0, 48, 28);
-          g.generateTexture('veh_' + v.type, 48, 28);
+          if (!v.isPolice) {
+            const g = this.make.graphics({ x: 0, y: 0, add: false });
+            g.fillStyle(v.color, 1);
+
+            if (v.isBike) g.fillRoundedRect(0, 0, 36, 16, 4);
+            else {
+              g.fillRoundedRect(0, 0, 56, 30, 6);
+              g.fillStyle(0x0f172a, 0.85);
+              g.fillRect(36, 4, 12, 22);
+            }
+            g.generateTexture('veh_' + v.type, v.isBike ? 36 : 56, v.isBike ? 16 : 30);
+          }
 
           const veh = this.physics.add.sprite(v.x, v.y, 'veh_' + v.type);
-          veh.setData('type', v.type);
+          veh.setData('props', v);
+          veh.setData('speedCurrent', 0);
+          veh.setData('health', 100);
           this.vehicles.add(veh);
+        });
+      }
+
+      setupWeatherEngine() {
+        this.rainParticles = this.add.particles(0, 0, 'player_tex', {
+          x: { min: 0, max: 6000 },
+          y: 0,
+          lifespan: 1000,
+          speedY: { min: 500, max: 700 },
+          scaleX: 0.04,
+          scaleY: 0.5,
+          quantity: 2,
+          blendMode: 'ADD',
+          emitting: false
         });
       }
 
       createHUD() {
         this.hudText = this.add.text(20, 20, '', {
-          fontSize: '18px', color: '#38bdf8', backgroundColor: 'rgba(15, 23, 42, 0.85)', padding: { x: 12, y: 8 }
+          fontSize: '14px', color: '#38bdf8', backgroundColor: 'rgba(15, 23, 42, 0.9)', padding: { x: 12, y: 8 }
         }).setScrollFactor(0).setDepth(20000);
-
-        // GTA-style Mini-Map Radar (Bottom-Left)
-        this.miniMapBg = this.add.rectangle(110, 610, 160, 160, 0x0f172a, 0.9).setStrokeStyle(3, 0x38bdf8).setScrollFactor(0).setDepth(20000);
-        this.miniMapDot = this.add.circle(110, 610, 5, 0x22c55e).setScrollFactor(0).setDepth(20001);
 
         this.updateHUDText();
       }
 
       updateHUDText() {
+        let starsStr = '';
+        for (let i = 0; i < userStats.wantedLevel; i++) starsStr += '★ ';
+        if (starsStr === '') starsStr = 'CLEAN';
+
         this.hudText.setText(
-          `STATE: ${userStats.current_state}  |  CASH: ₦${userStats.cash.toLocaleString()}  |  HEALTH: ${userStats.health}%\nMISSION: ${userStats.current_mission}`
+          `CASH: ₦${userStats.cash.toLocaleString()}  |  OUTFIT: ${userStats.outfit}  |  WANTED LEVEL: [ ${starsStr} ]`
         );
       }
 
-      setupTouchControls() {
+      setupAnalogControls() {
         this.moveAngle = null;
+        this.isGasPressed = false;
+        this.isBrakePressed = false;
 
-        document.getElementById('btn-drive').addEventListener('pointerdown', () => this.toggleDrive());
-        document.getElementById('btn-fire').addEventListener('pointerdown', () => this.fireWeapon());
+        const touchpad = document.getElementById('touch-touchpad');
+        const base = document.getElementById('analog-base');
+        const stick = document.getElementById('analog-stick');
 
-        const zone = document.getElementById('joystick-zone');
-        zone.addEventListener('touchstart', (e) => this.handleTouch(e), { passive: false });
-        zone.addEventListener('touchmove', (e) => this.handleTouch(e), { passive: false });
-        zone.addEventListener('touchend', () => { this.moveAngle = null; });
-      }
+        let touchId = null;
+        let startX = 0, startY = 0;
 
-      handleTouch(e) {
-        e.preventDefault();
-        const touch = e.touches[0];
-        const rect = e.target.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
+        touchpad.addEventListener('touchstart', (e) => {
+          e.preventDefault();
+          if (userStats.inJail) return;
 
-        const dx = touch.clientX - centerX;
-        const dy = touch.clientY - centerY;
-        this.moveAngle = Math.atan2(dy, dx);
-      }
+          const t = e.changedTouches[0];
+          touchId = t.identifier;
+          startX = t.clientX;
+          startY = t.clientY;
 
-      toggleDrive() {
-        let nearby = null;
-        this.vehicles.children.iterate(v => {
-          if (Phaser.Math.Distance.Between(this.player.x, this.player.y, v.x, v.y) < 80) {
-            nearby = v;
+          base.style.display = 'block';
+          base.style.left = startX + 'px';
+          base.style.top = startY + 'px';
+          stick.style.transform = `translate(-50%, -50%)`;
+        }, { passive: false });
+
+        touchpad.addEventListener('touchmove', (e) => {
+          e.preventDefault();
+          if (userStats.inJail) return;
+
+          for (let i = 0; i < e.changedTouches.length; i++) {
+            const t = e.changedTouches[i];
+            if (t.identifier === touchId) {
+              const dx = t.clientX - startX;
+              const dy = t.clientY - startY;
+              const dist = Math.min(Math.hypot(dx, dy), 45);
+              const angle = Math.atan2(dy, dx);
+
+              this.moveAngle = angle;
+
+              const stickX = Math.cos(angle) * dist;
+              const stickY = Math.sin(angle) * dist;
+              stick.style.transform = `translate(calc(-50% + ${stickX}px), calc(-50% + ${stickY}px))`;
+            }
           }
-        });
+        }, { passive: false });
 
-        if (nearby) {
-          this.player.setPosition(nearby.x, nearby.y);
-          this.addNotification(`Entered ${nearby.getData('type')}`);
-        } else {
-          this.addNotification("No vehicle nearby");
+        const resetAnalog = (e) => {
+          for (let i = 0; i < e.changedTouches.length; i++) {
+            if (e.changedTouches[i].identifier === touchId) {
+              touchId = null;
+              this.moveAngle = null;
+              base.style.display = 'none';
+            }
+          }
+        };
+
+        touchpad.addEventListener('touchend', resetAnalog);
+        touchpad.addEventListener('touchcancel', resetAnalog);
+
+        document.getElementById('btn-gas').addEventListener('pointerdown', () => { this.isGasPressed = true; });
+        document.getElementById('btn-gas').addEventListener('pointerup', () => { this.isGasPressed = false; });
+        document.getElementById('btn-brake').addEventListener('pointerdown', () => { this.isBrakePressed = true; });
+        document.getElementById('btn-brake').addEventListener('pointerup', () => { this.isBrakePressed = false; });
+
+        document.getElementById('btn-punch').addEventListener('pointerdown', () => this.punchAction());
+        document.getElementById('btn-sprint').addEventListener('pointerdown', () => { this.isSprinting = !this.isSprinting; });
+        document.getElementById('btn-enter').addEventListener('pointerdown', () => this.enterNearbyVehicle());
+        document.getElementById('btn-exit').addEventListener('pointerdown', () => this.exitVehicle());
+        document.getElementById('btn-action').addEventListener('pointerdown', () => this.triggerInteractable());
+      }
+
+      punchAction() {
+        this.addNotification("Attacked Pedestrian!");
+        this.triggerWantedLevel(1);
+      }
+
+      triggerWantedLevel(level) {
+        userStats.wantedLevel = Math.min(5, userStats.wantedLevel + level);
+        this.evadeTimer = 300; // 5 Minutes (300 Seconds) Evade Timer
+        this.updateHUDText();
+
+        // Spawn Police Officer On Pursuit
+        if (this.policeGroup.getLength() < userStats.wantedLevel * 2) {
+          const cop = this.physics.add.sprite(this.player.x + 400, this.player.y + 400, 'police_tex');
+          this.policeGroup.add(cop);
         }
       }
 
-      fireWeapon() {
-        const flash = this.add.circle(this.player.x + Math.cos(this.player.rotation) * 30, this.player.y + Math.sin(this.player.rotation) * 30, 8, 0xfde047);
-        this.time.delayedCall(80, () => flash.destroy());
+      handleGameTimers() {
+        // Jail Timer Engine
+        if (userStats.inJail) {
+          userStats.jailTimeRemaining--;
+          document.getElementById('jail-timer').innerText = `00:${userStats.jailTimeRemaining < 10 ? '0' : ''}${userStats.jailTimeRemaining}`;
+
+          if (userStats.jailTimeRemaining <= 0) {
+            userStats.inJail = false;
+            document.getElementById('jail-overlay').style.display = 'none';
+            this.player.setPosition(1800, 1950); // Release Outside Police Station
+            this.addNotification("Released from Police Custody!");
+          }
+          return;
+        }
+
+        // Police Evade Countdown Timer (5 Minutes)
+        if (userStats.wantedLevel > 0) {
+          this.evadeTimer--;
+          if (this.evadeTimer <= 0) {
+            userStats.wantedLevel = 0;
+            this.updateHUDText();
+            this.addNotification("Evaded Law Enforcement!");
+          }
+        }
+      }
+
+      enterNearbyVehicle() {
+        if (!this.nearbyVehicle) return;
+
+        // Stealing non-owned vehicle triggers police wanted level
+        if (!this.nearbyVehicle.getData('props').isPolice) {
+          this.triggerWantedLevel(1);
+        }
+
+        this.addNotification(`Stealing ${this.nearbyVehicle.getData('props').type}...`);
+        this.time.delayedCall(400, () => {
+          userStats.inVehicle = true;
+          userStats.currentVehicle = this.nearbyVehicle;
+          this.player.setVisible(false);
+        });
+      }
+
+      exitVehicle() {
+        if (!userStats.inVehicle) return;
+        const v = userStats.currentVehicle;
+        this.player.setPosition(v.x + 40, v.y);
+        this.player.setVisible(true);
+        userStats.inVehicle = false;
+        userStats.currentVehicle = null;
+        this.addNotification("Exited Vehicle");
+      }
+
+      triggerInteractable() {
+        if (!this.activeInteractable) return;
+        const data = this.activeInteractable.data;
+
+        if (data.type === 'clothes') {
+          if (userStats.cash >= data.cost) {
+            userStats.cash -= data.cost;
+            userStats.outfit = 'Designer Agbada';
+            userStats.outfitColor = 0xa855f7;
+            this.updatePlayerTexture();
+            this.updateHUDText();
+            this.addNotification("Purchased & Equipped Designer Outfit!");
+          } else {
+            this.addNotification("Insufficient Cash for Outfit!");
+          }
+        } else if (data.type === 'betting') {
+          const won = Math.random() < 0.5;
+          if (won) {
+            userStats.cash += 50000;
+            this.addNotification("Betting Ticket Won! +₦50,000");
+          } else {
+            userStats.cash = Math.max(0, userStats.cash - 25000);
+            this.addNotification("Betting Ticket Lost! -₦25,000");
+          }
+          this.updateHUDText();
+        } else if (data.type === 'property') {
+          if (userStats.cash >= data.price) {
+            userStats.cash -= data.price;
+            userStats.properties.push(data.name);
+            this.updateHUDText();
+            this.addNotification(`Purchased ${data.name}!`);
+          }
+        } else if (data.type === 'mechanic') {
+          if (userStats.inVehicle) {
+            userStats.cash = Math.max(0, userStats.cash - 15000);
+            userStats.currentVehicle.setData('health', 100);
+            this.updateHUDText();
+            this.addNotification("Vehicle Repaired & Serviced!");
+          }
+        } else if (data.type === 'mission') {
+          userStats.cash += data.reward;
+          this.updateHUDText();
+          this.addNotification(`Mission Passed! Earned ₦${data.reward.toLocaleString()}`);
+        }
+      }
+
+      arrestPlayer() {
+        if (userStats.inJail) return;
+
+        userStats.inJail = true;
+        userStats.wantedLevel = 0;
+        userStats.jailTimeRemaining = 15; // 15 Seconds Visible Cell Time
+        this.updateHUDText();
+
+        if (userStats.inVehicle) this.exitVehicle();
+
+        // Visible Arrest & Cell Transfer Sequence
+        this.player.setPosition(1800, 1800); // Inside Police Cell
+        document.getElementById('jail-overlay').style.display = 'flex';
+        this.addNotification("ARRESTED BY LAGOS POLICE!");
       }
 
       addNotification(msg) {
-        const text = this.add.text(640, 180, msg, { fontSize: '22px', color: '#22c55e', backgroundColor: '#000', padding: { x: 12, y: 6 } })
+        const text = this.add.text(640, 160, msg, { fontSize: '18px', color: '#ef4444', backgroundColor: '#0f172a', padding: { x: 12, y: 6 } })
           .setOrigin(0.5).setScrollFactor(0).setDepth(30000);
-        this.tweens.add({ targets: text, alpha: 0, y: 140, duration: 2000, onComplete: () => text.destroy() });
+        this.tweens.add({ targets: text, alpha: 0, y: 120, duration: 1800, onComplete: () => text.destroy() });
       }
 
       updateTimeAndWeather() {
-        // West Africa Time (UTC+1)
         const watHour = new Date(new Date().getTime() + (1 * 3600000)).getUTCHours();
         let tint = 0xffffff;
 
-        if (watHour >= 6 && watHour < 12) tint = 0xfef08a;      // Morning Gold
-        else if (watHour >= 12 && watHour < 17) tint = 0xffffff; // Afternoon Bright Daylight
-        else if (watHour >= 17 && watHour < 20) tint = 0xf97316; // Evening Orange
-        else tint = 0x1e1b4b;                                   // Night Dark Blue
+        if (watHour >= 6 && watHour < 12) tint = 0xfef08a;
+        else if (watHour >= 12 && watHour < 17) tint = 0xffffff;
+        else if (watHour >= 17 && watHour < 20) tint = 0xf97316;
+        else tint = 0x1e1b4b;
 
         this.cameras.main.setTint(tint);
+        this.rainParticles.setEmitting(Math.random() < 0.25);
       }
 
       update() {
-        if (this.moveAngle !== null) {
-          const speed = 240;
-          this.player.body.setVelocity(
-            Math.cos(this.moveAngle) * speed,
-            Math.sin(this.moveAngle) * speed
-          );
-          this.player.rotation = this.moveAngle;
-        } else {
-          this.player.body.setVelocity(0, 0);
-        }
+        if (userStats.inJail) return;
 
-        // Mini-map radar calculation
-        const radarX = 110 + ((this.player.x / 6000) * 140 - 70);
-        const radarY = 610 + ((this.player.y / 4000) * 140 - 70);
-        this.miniMapDot.setPosition(radarX, radarY);
-
-        // State Region Check
-        let state = 'Lagos';
-        if (this.player.x > 2000 && this.player.x <= 4000 && this.player.y < 2000) state = 'Oyo (Ibadan)';
-        else if (this.player.x > 4000 && this.player.y < 2000) state = 'Abuja (FCT)';
-        else if (this.player.x > 4000 && this.player.y >= 2000) state = 'Kano';
-        else if (this.player.x > 2000 && this.player.x <= 4000 && this.player.y >= 2000) state = 'Rivers';
-        else if (this.player.x <= 2000 && this.player.y >= 2000) state = 'Akwa Ibom';
-
-        if (userStats.current_state !== state) {
-          userStats.current_state = state;
-          this.updateHUDText();
-          this.addNotification(`ENTERING ${state.toUpperCase()}`);
-          this.syncToSupabase();
-        }
-      }
-
-      async syncToSupabase() {
-        if (!currentUser) return;
-        await supabaseClient.from('profiles').upsert({
-          id: currentUser.id,
-          cash: userStats.cash,
-          health: userStats.health,
-          current_state: userStats.current_state,
-          updated_at: new Date()
+        // Interaction Zone Check
+        this.activeInteractable = null;
+        this.interactables.forEach(item => {
+          if (Phaser.Math.Distance.Between(this.player.x, this.player.y, item.zone.x, item.zone.y) < 90) {
+            this.activeInteractable = item;
+          }
         });
-      }
-    }
 
-    function buyVehicle(model, price) {
-      if (userStats.cash >= price) {
-        userStats.cash -= price;
-        alert(`Congratulations! You purchased the ${model.toUpperCase()}.`);
-        document.getElementById('dealership-modal').style.display = 'none';
-      } else {
-        alert("Insufficient cash balance.");
-      }
-    }
+        // Vehicle Proximity Check
+        this.nearbyVehicle = null;
+        if (!userStats.inVehicle) {
+          this.vehicles.children.iterate(v => {
+            if (Phaser.Math.Distance.Between(this.player.x, this.player.y, v.x, v.y) < 70) {
+              this.nearbyVehicle = v;
+            }
+          });
+        }
 
-    function closeDealership() {
-      document.getElementById('dealership-modal').style.display = 'none';
+        // Police Pursuit & Arrest AI Engine
+        this.policeGroup.children.iterate(cop => {
+          if (userStats.wantedLevel > 0) {
+            this.physics.moveToObject(cop, this.player, 210);
+            cop.rotation = Phaser.Math.Angle.Between(cop.x, cop.y, this.player.x, this.player.y);
+
+            // Arrest Trigger
+            if (Phaser.Math.Distance.Between(cop.x, cop.y, this.player.x, this.player.y) < 35) {
+              this.arrestPlayer();
+            }
+          } else {
+            cop.body.setVelocity(0, 0);
+          }
+        });
+
+        // Control Visibility Routing
+        document.getElementById('btn-enter').style.display = (this.nearbyVehicle && !userStats.inVehicle) ? 'flex' : 'none';
+        document.getElementById('btn-action').style.display = (this.activeInteractable) ? 'flex' : 'none';
+        document.getElementById('btn-exit').style.display = userStats.inVehicle ? 'flex' : 'none';
+        document.getElementById('btn-gas').style.display = userStats.inVehicle ? 'flex' : 'none';
+        document.getElementById('btn-brake').style.display = userStats.inVehicle ? 'flex' : 'none';
+        document.getElementById('btn-punch').style.display = !userStats.inVehicle ? 'flex' : 'none';
+        document.getElementById('btn-sprint').style.display = !userStats.inVehicle ? 'flex' : 'none';
+
+        // Vehicle & Walking Movement Physics
+        if (userStats.inVehicle) {
+          const veh = userStats.currentVehicle;
+          const props = veh.getData('props');
+          let currentSpeed = veh.getData('speedCurrent') || 0;
+
+          if (this.isGasPressed) currentSpeed = Math.min(props.speed, currentSpeed + (props.isBike ? 12 : 8));
+          else if (this.isBrakePressed) currentSpeed = Math.max(-100, currentSpeed - 14);
+          else currentSpeed *= 0.96;
+
+          veh.setData('speedCurrent', currentSpeed);
+
+          if (this.moveAngle !== null && Math.abs(currentSpeed) > 10) {
+            const turnRate = props.isBike ? 0.08 : 0.05;
+            veh.rotation = Phaser.Math.Angle.RotateTo(veh.rotation, this.moveAngle, turnRate);
+          }
+
+          veh.body.setVelocity(
+            Math.cos(veh.rotation) * currentSpeed,
+            Math.sin(veh.rotation) * currentSpeed
+          );
+
+          this.player.setPosition(veh.x, veh.y);
+        } else {
+          const speed = this.isSprinting ? 300 : 170;
+          if (this.moveAngle !== null) {
+            this.player.body.setVelocity(
+              Math.cos(this.moveAngle) * speed,
+              Math.sin(this.moveAngle) * speed
+            );
+            this.player.rotation = this.moveAngle;
+          } else {
+            this.player.body.setVelocity(0, 0);
+          }
+        }
+      }
     }
   </script>
 </body>
