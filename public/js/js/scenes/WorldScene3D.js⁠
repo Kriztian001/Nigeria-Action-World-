@@ -1,0 +1,171 @@
+class WorldScene3D {
+  constructor() {
+    this.container = document.getElementById('game-container');
+    this.scene = new THREE.Scene();
+    this.scene.background = new THREE.Color(0x0f172a);
+    this.scene.fog = new THREE.FogExp2(0x0f172a, 0.012);
+
+    this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    
+    this.renderer = new THREE.WebGLRenderer({ antialias: true });
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.shadowMap.enabled = true;
+    this.container.appendChild(this.renderer.domElement);
+
+    this.clock = new THREE.Clock();
+    this.npcs = [];
+    this.vehicles = [];
+    this.interactables = [];
+
+    this.combatSystem = new CombatSystem(this);
+    this.aiSystem = new AISystem(this);
+
+    this.initLighting();
+    this.initEnvironment();
+    this.initRainSystem();
+    this.initPlayer();
+    this.initNPCs();
+    this.initVehicles();
+    this.initZones();
+
+    window.addEventListener('resize', () => this.onResize());
+    this.animate();
+  }
+
+  initLighting() {
+    const ambient = new THREE.AmbientLight(0xffffff, 0.7);
+    this.scene.add(ambient);
+
+    this.sun = new THREE.DirectionalLight(0xffffff, 1.0);
+    this.sun.position.set(40, 80, 40);
+    this.sun.castShadow = true;
+    this.scene.add(this.sun);
+  }
+
+  initEnvironment() {
+    // 3D Ground & Asphalt Roads
+    const groundGeo = new THREE.PlaneGeometry(600, 600);
+    const groundMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.6 });
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    this.scene.add(ground);
+  }
+
+  initRainSystem() {
+    const count = 3000;
+    const rainGeo = new THREE.BufferGeometry();
+    const positions = new Float32Array(count * 3);
+
+    for (let i = 0; i < count * 3; i += 3) {
+      positions[i] = (Math.random() - 0.5) * 200;
+      positions[i + 1] = Math.random() * 100;
+      positions[i + 2] = (Math.random() - 0.5) * 200;
+    }
+
+    rainGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    const rainMat = new THREE.PointsMaterial({ color: 0x38bdf8, size: 0.35, transparent: true, opacity: 0.6 });
+    this.rainParticles = new THREE.Points(rainGeo, rainMat);
+    this.scene.add(this.rainParticles);
+  }
+
+  initPlayer() {
+    // Player 3D Mesh (GLTF character fallback geometry)
+    const pGeo = new THREE.CylinderGeometry(0.4, 0.4, 1.8, 16);
+    const pMat = new THREE.MeshStandardMaterial({ color: userStats.outfitColor });
+    this.playerMesh = new THREE.Mesh(pGeo, pMat);
+    this.playerMesh.position.set(0, 0.9, 0);
+    this.playerMesh.castShadow = true;
+    this.scene.add(this.playerMesh);
+  }
+
+  initNPCs() {
+    for (let i = 0; i < 12; i++) {
+      const isGang = i % 2 === 0;
+      const geo = new THREE.CylinderGeometry(0.4, 0.4, 1.8, 16);
+      const mat = new THREE.MeshStandardMaterial({ color: isGang ? 0xef4444 : 0x10b981 });
+      const mesh = new THREE.Mesh(geo, mat);
+      
+      mesh.position.set((Math.random() - 0.5) * 80, 0.9, (Math.random() - 0.5) * 80);
+      mesh.castShadow = true;
+      this.scene.add(mesh);
+
+      const npcObj = { mesh, isGangMember: isGang };
+      this.combatSystem.initEntityHealth(npcObj, 100);
+      this.npcs.push(npcObj);
+    }
+  }
+
+  initVehicles() {
+    const vGeo = new THREE.BoxGeometry(2.2, 1.4, 4.5);
+    const vMat = new THREE.MeshStandardMaterial({ color: 0xfacc15 });
+    const vehMesh = new THREE.Mesh(vGeo, vMat);
+    vehMesh.position.set(10, 0.7, 10);
+    vehMesh.castShadow = true;
+    this.scene.add(vehMesh);
+
+    this.vehicles.push({ mesh: vehMesh, type: 'Danfo Bus', speed: 18 });
+  }
+
+  initZones() {
+    // GTA Style Glowing Mission Cylinder
+    const mGeo = new THREE.CylinderGeometry(1.5, 1.5, 3, 16);
+    const mMat = new THREE.MeshBasicMaterial({ color: 0x22c55e, wireframe: true, transparent: true, opacity: 0.7 });
+    const marker = new THREE.Mesh(mGeo, mMat);
+    marker.position.set(-15, 1.5, -15);
+    this.scene.add(marker);
+
+    this.interactables.push({
+      mesh: marker,
+      data: { name: 'Danfo Transport Mission', type: 'mission', reward: 45000, state: 'Lagos' }
+    });
+  }
+
+  updateThirdPersonCamera() {
+    if (!this.playerMesh) return;
+    const offset = new THREE.Vector3(0, 3.2, 6.5);
+    const target = this.playerMesh.position.clone().add(offset);
+
+    this.camera.position.lerp(target, 0.1);
+    this.camera.lookAt(this.playerMesh.position.x, this.playerMesh.position.y + 1.2, this.playerMesh.position.z);
+  }
+
+  onResize() {
+    this.camera.aspect = window.innerWidth / window.innerHeight;
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
+  }
+
+  animate() {
+    requestAnimationFrame(() => this.animate());
+    const delta = this.clock.getDelta();
+
+    // Weather particles update
+    if (this.rainParticles && gameSettings.weather === 'rain') {
+      const positions = this.rainParticles.geometry.attributes.position.array;
+      for (let i = 1; i < positions.length; i += 3) {
+        positions[i] -= delta * 45;
+        if (positions[i] < 0) positions[i] = 100;
+      }
+      this.rainParticles.geometry.attributes.position.needsUpdate = true;
+    }
+
+    // Controls Movement Update
+    if (window.moveAngle !== null && this.playerMesh && !userStats.inVehicle && !userStats.inJail) {
+      const speed = (window.isSprinting ? 9 : 4.5) * delta;
+      const dx = Math.cos(window.moveAngle) * speed;
+      const dz = Math.sin(window.moveAngle) * speed;
+
+      this.playerMesh.position.x += dx;
+      this.playerMesh.position.z += dz;
+      this.playerMesh.rotation.y = -window.moveAngle + Math.PI / 2;
+    }
+
+    this.aiSystem.update(delta);
+    this.combatSystem.update(this.camera);
+    this.updateThirdPersonCamera();
+
+    this.renderer.render(this.scene, this.camera);
+  }
+}
