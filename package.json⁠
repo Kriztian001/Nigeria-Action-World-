@@ -1,0 +1,12 @@
+{
+  "name": "nigeria-action-world",
+  "version": "1.0.0",
+  "description": "Browser playable top-down open world action game set in Nigeria",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
