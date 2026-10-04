@@ -28,105 +28,101 @@
   <!-- Initial System Loading Overlay -->
   <div id="loader-overlay">
     <div class="loader-title">NIGERIA ACTION WORLD 3D</div>
-    <div class="loader-subtitle">Loading 3D world shaders, city meshes & character models...</div>
+    <div class="loader-subtitle">Building street grids, realistic lighting & character models...</div>
     <div class="loader-bar-bg"><div id="loader-fill" class="loader-bar-fill"></div></div>
     <div id="loader-status-text" class="loader-status">Initializing Game Systems 0%</div>
   </div>
 
-  <!-- Vehicle Radio Broadcast Widget -->
-  <div id="radio-widget" onclick="cycleRadioStation()" style="display:none;">
-    <div class="radio-waves">
-      <div class="radio-bar"></div><div class="radio-bar"></div><div class="radio-bar"></div>
+  <!-- Dialogue Subtitles -->
+  <div id="dialogue-subtitle"></div>
+
+  <!-- GTA V Style HUD Bar -->
+  <div id="hud-container" style="display:none;">
+    <div class="hud-cash" id="hud-cash-text">₦250,000</div>
+    <div class="hud-status-bars">
+      <div class="bar-wrapper"><div class="bar-fill-health" id="hud-health-bar"></div></div>
+      <div class="bar-wrapper"><div class="bar-fill-armor" id="hud-armor-bar"></div></div>
     </div>
-    <div id="radio-station-text">Beat 99.9 FM (Lagos)</div>
+    <div class="hud-wanted-stars" id="hud-wanted-text"></div>
   </div>
 
-  <!-- Top Navigation Utility Bar -->
-  <div id="top-bar" style="display:none;">
-    <button class="top-btn" onclick="togglePauseMenu()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
-      Pause
-    </button>
-    <button class="top-btn" id="btn-auth-trigger" onclick="openAuthModal()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-      Sync
-    </button>
+  <!-- Character Customization Menu Overlay -->
+  <div id="customization-overlay" style="display:none;">
+    <div class="modal-card">
+      <h2>CHARACTER WARDROBE</h2>
+      <div class="setting-row">
+        <label>Gender:</label>
+        <select id="cust-gender" onchange="updatePlayerAppearance()">
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <label>Hairstyle:</label>
+        <select id="cust-hair" onchange="updatePlayerAppearance()">
+          <option value="short">Short Cut / Fade</option>
+          <option value="afro">Afro / Locs</option>
+          <option value="buzz">Buzz Cut</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <label>Outfit Color:</label>
+        <input type="color" id="cust-color" value="#38bdf8" onchange="updatePlayerAppearance()" />
+      </div>
+      <button class="btn-resume" onclick="closeCustomization()">Save & Continue</button>
+    </div>
   </div>
 
-  <!-- Pause & Game Settings Modal -->
+  <!-- Top Pause & Sync Utility Bar -->
+  <div id="top-bar" style="position:fixed; top:16px; left:16px; z-index:30000; display:none; gap:10px;">
+    <button class="top-btn" onclick="togglePauseMenu()" style="padding:8px 14px; background:#0f172a; color:#fff; border:1px solid #334155; border-radius:6px; font-weight:bold;">Pause</button>
+    <button class="top-btn" onclick="openCustomization()" style="padding:8px 14px; background:#0f172a; color:#fff; border:1px solid #334155; border-radius:6px; font-weight:bold;">Style</button>
+  </div>
+
+  <!-- Pause Settings Modal -->
   <div id="pause-overlay" style="display:none;">
     <div class="modal-card">
-      <h2>GAME PAUSED</h2>
+      <h2>GAME SETTINGS</h2>
       <div class="setting-row">
-        <div class="setting-label">Joystick Placement</div>
-        <div class="setting-control">
-          <select id="setting-joystick" onchange="updateSettings()">
-            <option value="dynamic">Dynamic (Follow Touch)</option>
-            <option value="fixed">Fixed Screen Corner</option>
-          </select>
-        </div>
+        <label>Graphics Quality</label>
+        <select id="setting-graphics" onchange="updateSettings()">
+          <option value="high">High (Shadows & Lights)</option>
+          <option value="medium">Medium (Standard)</option>
+        </select>
       </div>
       <div class="setting-row">
-        <div class="setting-label">Target Frame Rate</div>
-        <div class="setting-control">
-          <select id="setting-fps" onchange="updateSettings()">
-            <option value="60">60 FPS (High Smoothness)</option>
-            <option value="30">30 FPS (Power Saver)</option>
-          </select>
-        </div>
+        <label>Frame Rate Limit</label>
+        <select id="setting-fps" onchange="updateSettings()">
+          <option value="60">60 FPS Smooth</option>
+          <option value="30">30 FPS Power Saver</option>
+        </select>
       </div>
       <div class="setting-row">
-        <div class="setting-label">Weather System</div>
-        <div class="setting-control">
-          <select id="setting-weather" onchange="toggleWeather()">
-            <option value="rain">Tropical Rainstorm</option>
-            <option value="clear">Clear Sunny Sky</option>
-          </select>
-        </div>
+        <label>Audio & Speech</label>
+        <select id="setting-audio" onchange="updateSettings()">
+          <option value="enabled">Audio & Voices On</option>
+          <option value="disabled">Mute Audio</option>
+        </select>
       </div>
       <button class="btn-resume" onclick="togglePauseMenu()">Resume Operations</button>
-    </div>
-  </div>
-
-  <!-- Jail Overlay HUD -->
-  <div id="jail-overlay" style="display:none;">
-    <h1>ARRESTED & DETAINED</h1>
-    <p>Serving cell sentence for offences committed</p>
-    <div id="jail-timer">00:15</div>
-  </div>
-
-  <!-- Auth Modal -->
-  <div id="auth-overlay" style="display:none;">
-    <div class="auth-card">
-      <h3>NIGERIA ACTION WORLD 3D</h3>
-      <p class="subtitle">Log in to save real estate, personal vehicles & balance</p>
-      <input type="email" id="auth-email" class="auth-input" placeholder="Email Address" />
-      <input type="password" id="auth-password" class="auth-input" placeholder="Password" />
-      <button id="auth-submit" class="auth-btn-small">Sign In / Register</button>
-      <div id="auth-status" class="auth-status"></div>
-      <p style="color:#38bdf8; font-size:0.75rem; cursor:pointer;" onclick="closeAuthModal()">Continue Playing as Guest</p>
     </div>
   </div>
 
   <!-- 3D WebGL Canvas Container -->
   <div id="game-container"></div>
 
-  <!-- HUD Overlay (Hidden until game fully loads) -->
-  <div id="hud-bar" style="display:none; position:fixed; top:12px; left:16px; z-index:30000; background:rgba(15,23,42,0.9); color:#38bdf8; padding:8px 14px; border-radius:8px; font-weight:bold; font-size:0.85rem; border:1px solid #334155;"></div>
-
-  <!-- Dynamic Touch Controls Overlay -->
+  <!-- Controls & Camera Drag Layer -->
   <div id="controls-layer">
     <div id="touch-touchpad"></div>
+    <div id="camera-dragzone"></div>
+    
     <div id="analog-base"><div id="analog-stick"></div></div>
     
     <div id="action-buttons" style="display:none;">
       <div id="btn-punch" class="touch-btn">ATTACK</div>
       <div id="btn-sprint" class="touch-btn">SPRINT</div>
-      <div id="btn-action" class="touch-btn" style="display:none; background: rgba(34, 197, 94, 0.8);">ACTION</div>
-      <div id="btn-enter" class="touch-btn" style="display:none; background: rgba(56, 189, 248, 0.8);">STEAL/ENTER</div>
-      <div id="btn-gas" class="touch-btn" style="display:none; background: rgba(34, 197, 94, 0.8);">GAS</div>
-      <div id="btn-brake" class="touch-btn" style="display:none; background: rgba(239, 68, 68, 0.8);">BRAKE</div>
-      <div id="btn-exit" class="touch-btn" style="display:none; background: rgba(239, 68, 68, 0.8);">EXIT</div>
+      <div id="btn-action" class="touch-btn" style="display:none; background: rgba(34, 197, 94, 0.8);">STORE</div>
+      <div id="btn-enter" class="touch-btn" style="display:none; background: rgba(56, 189, 248, 0.8);">ENTER</div>
     </div>
   </div>
 
