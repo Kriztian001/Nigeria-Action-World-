@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Nigeria Action World</title>
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; touch-action: none; }
+    body, html { width: 100%; height: 100%; overflow: hidden; background-color: #000; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    #game-container { width: 100vw; height: 100vh; position: relative; }
+
+    /* Landscape Guard Overlay */
+    #orientation-warning {
+      display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: #090d16; color: #fff; z-index: 99999; flex-direction: column;
+      align-items: center; justify-content: center; text-align: center; padding: 24px;
+    }
+    #orientation-warning h2 { color: #38bdf8; font-size: 1.8rem; margin-bottom: 12px; }
+    #orientation-warning p { color: #94a3b8; font-size: 1.1rem; max-width: 380px; }
+    @media screen and (orientation: portrait) {
+      #orientation-warning { display: flex; }
+    }
+
+    /* Supabase Auth Modal */
+    #auth-overlay {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(15, 23, 42, 0.92); z-index: 50000; display: flex;
+      align-items: center; justify-content: center; backdrop-filter: blur(8px);
+    }
+    .auth-card {
+      background: #1e293b; color: #fff; width: 92%; max-width: 420px;
+      padding: 28px; border-radius: 16px; border: 1px solid #334155; text-align: center;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+    .auth-card h2 { margin-bottom: 8px; font-size: 1.6rem; color: #38bdf8; letter-spacing: 1px; }
+    .auth-card p.subtitle { color: #94a3b8; font-size: 0.85rem; margin-bottom: 20px; }
+    .auth-input {
+      width: 100%; padding: 14px; margin-bottom: 14px; border-radius: 8px;
+      border: 1px solid #475569; background: #0f172a; color: #fff; font-size: 1rem; outline: none;
+    }
+    .auth-input:focus { border-color: #38bdf8; }
+    .auth-btn {
+      width: 100%; padding: 14px; border-radius: 8px; border: none;
+      background: #22c55e; color: #fff; font-weight: bold; font-size: 1.05rem;
+      cursor: pointer; margin-bottom: 12px; transition: background 0.2s;
+    }
+    .auth-btn:active { background: #16a34a; }
+    .auth-status { font-size: 0.85rem; color: #ef4444; margin-bottom: 12px; min-height: 18px; }
+    .auth-toggle { color: #38bdf8; font-size: 0.9rem; cursor: pointer; text-decoration: underline; }
+
+    /* Dealership Modal */
+    #dealership-modal {
+      display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.85); z-index: 40000; align-items: center; justify-content: center;
+    }
+    .dealership-card {
+      background: #1e293b; color: #fff; width: 90%; max-width: 500px;
+      padding: 24px; border-radius: 16px; border: 1px solid #334155; text-align: center;
+    }
+    .car-list { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+    .car-item {
+      background: #0f172a; padding: 12px; border-radius: 8px; border: 1px solid #334155;
+      display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+    }
+    .car-item h4 { color: #38bdf8; margin-bottom: 4px; font-size: 0.95rem; }
+    .car-item p { color: #22c55e; font-size: 0.85rem; font-weight: bold; margin-bottom: 8px; }
+    .buy-btn {
+      padding: 6px 12px; background: #38bdf8; border: none; color: #000; font-weight: bold;
+      border-radius: 4px; cursor: pointer; width: 100%;
+    }
+
+    /* On-Screen Touch Controls Overlay */
+    #controls-layer {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 10000; display: flex; justify-content: space-between; padding: 20px;
+    }
+    .touch-btn {
+      pointer-events: auto; width: 72px; height: 72px; border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255,255,255,0.5);
+      color: white; font-weight: bold; font-size: 0.9rem; display: flex; align-items: center;
+      justify-content: center; backdrop-filter: blur(4px); box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+    .touch-btn:active { background: rgba(56, 189, 248, 0.6); transform: scale(0.95); }
+    #action-buttons { position: absolute; bottom: 30px; right: 30px; display: flex; gap: 16px; }
+    #joystick-zone { position: absolute; bottom: 30px; left: 30px; width: 140px; height: 140px; pointer-events: auto; }
+  </style>
+</head>
+<body>
+
+  <!-- Landscape Orientation Warning -->
+  <div id="orientation-warning">
+    <h2>🔄 ROTATE YOUR DEVICE</h2>
+    <p>Nigeria Action World is built for Landscape view. Please turn your mobile device sideways to continue playing.</p>
+  </div>
+
+  <!-- Supabase Login Overlay -->
+  <div id="auth-overlay">
+    <div class="auth-card">
+      <h2>NIGERIA ACTION WORLD</h2>
+      <p class="subtitle">Open World Mobile Action Game</p>
+      <input type="email" id="auth-email" class="auth-input" placeholder="Email Address" />
+      <input type="password" id="auth-password" class="auth-input" placeholder="Password" />
+      <button id="auth-submit" class="auth-btn">Log In / Play</button>
+      <div id="auth-status" class="auth-status"></div>
+      <p class="auth-toggle" onclick="toggleAuthMode()">Switch between Login and Sign Up</p>
+    </div>
+  </div>
+
+  <!-- Vehicle Showroom Modal -->
+  <div id="dealership-modal">
+    <div class="dealership-card">
+      <h3 style="color:#38bdf8;">NIGERIA AUTO DEALERSHIP</h3>
+      <p style="font-size:0.85rem; color:#94a3b8; margin-top:4px;">Purchase high-speed luxury rides</p>
+      <div class="car-list">
+        <div class="car-item">
+          <h4>Honda Accord</h4>
+          <p>₦500,000</p>
+          <button class="buy-btn" onclick="buyVehicle('honda', 500000)">Buy</button>
+        </div>
+        <div class="car-item">
+          <h4>Lexus RX350</h4>
+          <p>₦1,500,000</p>
+          <button class="buy-btn" onclick="buyVehicle('lexus', 1500000)">Buy</button>
+        </div>
+        <div class="car-item">
+          <h4>Lamborghini</h4>
+          <p>₦5,000,000</p>
+          <button class="buy-btn" onclick="buyVehicle('lamborghini', 5000000)">Buy</button>
+        </div>
+      </div>
+      <button class="auth-btn" style="background:#64748b; margin-top:8px;" onclick="closeDealership()">Close Garage</button>
+    </div>
+  </div>
+
+  <div id="game-container"></div>
+
+  <!-- On-Screen Virtual Controls -->
+  <div id="controls-layer">
+    <div id="joystick-zone"></div>
+    <div id="action-buttons">
+      <div id="btn-drive" class="touch-btn">DRIVE</div>
+      <div id="btn-fire" class="touch-btn" style="background: rgba(239, 68, 68, 0.4);">FIRE</div>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://thltnyelubebdqhkfxuj.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRobHRueWVsdWJlYmRxaGtmeHVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTExMDE1MTUsImV4cCI6MjEwNjY3NzUxNX0.dXaaMyyMBWlpN5Rg0rlCIpNqly_EsnqwhIR7AlAdDuo";
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let isSignUp = false;
+    let currentUser = null;
+    let gameInstance = null;
+
+    let userStats = {
+      health: 100,
+      cash: 50000,
+      current_state: 'Lagos',
+      current_mission: 'Transport passengers from Lagos to Ibadan Bukka'
+    };
+
+    function toggleAuthMode() {
+      isSignUp = !isSignUp;
+      document.getElementById('auth-submit').innerText = isSignUp ? 'Sign Up' : 'Log In / Play';
+    }
+
+    document.getElementById('auth-submit').addEventListener('click', async () => {
+      const email = document.getElementById('auth-email').value;
+      const password = document.getElementById('auth-password').value;
+      const status = document.getElementById('auth-status');
+
+      if (!email || !password) { status.innerText = "Please complete all fields."; return; }
+      status.innerText = "Connecting to database...";
+
+      if (isSignUp) {
+        const { data, error } = await supabaseClient.auth.signUp({ email, password });
+        if (error) status.innerText = error.message;
+        else { status.innerText = "Account registered! Logging in..."; loginSuccess(data.user); }
+      } else {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) status.innerText = error.message;
+        else loginSuccess(data.user);
+      }
+    });
+
+    async function loginSuccess(user) {
+      currentUser = user;
+      document.getElementById('auth-overlay').style.display = 'none';
+
+      const { data } = await supabaseClient.from('profiles').select('*').eq('id', user.id).single();
+      if (data) userStats = Object.assign(userStats, data);
+
+      initGame();
+    }
+
+    function initGame() {
+      const config = {
+        type: Phaser.AUTO,
+        parent: 'game-container',
+        scale: {
+          mode: Phaser.Scale.FIT,
+          autoCenter: Phaser.Scale.CENTER_BOTH,
+          width: 1280,
+          height: 720
+        },
+        physics: {
+          default: 'arcade',
+          arcade: { gravity: { y: 0 }, debug: false }
+        },
+        scene: [NigeriaWorldScene]
+      };
+      gameInstance = new Phaser.Game(config);
+    }
+
+    class NigeriaWorldScene extends Phaser.Scene {
+      constructor() { super({ key: 'NigeriaWorldScene' }); }
+
+      create() {
+        this.cameras.main.setBounds(0, 0, 6000, 4000);
+        this.physics.world.setBounds(0, 0, 6000, 4000);
+
+        // Terrain Background
+        this.add.rectangle(3000, 2000, 6000, 4000, 0x1b4332);
+
+        // State Expressways & Roads
+        this.createRoads();
+
+        // Points of Interest
+        this.createPOIs();
+
+        // Player & Vehicles
+        this.player = this.physics.add.sprite(800, 600, null);
+        this.createPlayerTexture();
+        this.player.setTexture('player_tex');
+        this.player.setCollideWorldBounds(true);
+
+        this.vehicles = this.physics.add.group();
+        this.spawnVehicles();
+
+        this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
+
+        // HUD Setup
+        this.createHUD();
+
+        // Touch Control Inputs
+        this.setupTouchControls();
+
+        // Nigeria Time Ambient Light Engine
+        this.time.addEvent({ delay: 5000, callback: this.updateTimeAndWeather, callbackScope: this, loop: true });
+        this.updateTimeAndWeather();
+      }
+
+      createPlayerTexture() {
+        const g = this.make.graphics({ x: 0, y: 0, add: false });
+        g.fillStyle(0x38bdf8, 1);
+        g.fillCircle(16, 16, 16);
+        g.fillStyle(0x000000, 1);
+        g.fillCircle(22, 16, 4);
+        g.generateTexture('player_tex', 32, 32);
+      }
+
+      createRoads() {
+        const g = this.add.graphics();
+        g.lineStyle(120, 0x334155, 1);
+
+        // East-West Trans-Nigeria Highway
+        g.strokeLineShape(new Phaser.Geom.Line(200, 600, 5800, 600));
+        g.strokeLineShape(new Phaser.Geom.Line(200, 2000, 5800, 2000));
+        g.strokeLineShape(new Phaser.Geom.Line(200, 3400, 5800, 3400));
+
+        // North-South Connecting Highways
+        g.strokeLineShape(new Phaser.Geom.Line(1000, 200, 1000, 3800));
+        g.strokeLineShape(new Phaser.Geom.Line(3000, 200, 3000, 3800));
+        g.strokeLineShape(new Phaser.Geom.Line(5000, 200, 5000, 3800));
+      }
+
+      createPOIs() {
+        const pois = [
+          { name: 'Balogun Market (Lagos)', x: 800, y: 800, color: 0xeab308 },
+          { name: 'Dugbe Bukka (Oyo)', x: 2800, y: 800, color: 0xf97316 },
+          { name: 'Abuja City Mall (FCT)', x: 4800, y: 800, color: 0x3b82f6 },
+          { name: 'Kano Central Mosque (Kano)', x: 4800, y: 2200, color: 0x22c55e },
+          { name: 'Port Harcourt Refinery (Rivers)', x: 2800, y: 3200, color: 0xef4444 },
+          { name: 'Uyo Auto Repair (Akwa Ibom)', x: 800, y: 3200, color: 0xa855f7 }
+        ];
+
+        pois.forEach(p => {
+          this.add.rectangle(p.x, p.y, 160, 120, p.color, 0.8).setStrokeStyle(4, 0xffffff);
+          this.add.text(p.x, p.y - 80, p.name, { fontSize: '16px', color: '#fff', backgroundColor: '#000' }).setOrigin(0.5);
+        });
+      }
+
+      spawnVehicles() {
+        const vehicleData = [
+          { x: 900, y: 600, type: 'Danfo Bus', color: 0xfacc15 },
+          { x: 1100, y: 600, type: 'Keke Napep', color: 0x22c55e },
+          { x: 2900, y: 800, type: 'Honda Accord', color: 0x94a3b8 }
+        ];
+
+        vehicleData.forEach(v => {
+          const g = this.make.graphics({ x: 0, y: 0, add: false });
+          g.fillStyle(v.color, 1);
+          g.fillRect(0, 0, 48, 28);
+          g.generateTexture('veh_' + v.type, 48, 28);
+
+          const veh = this.physics.add.sprite(v.x, v.y, 'veh_' + v.type);
+          veh.setData('type', v.type);
+          this.vehicles.add(veh);
+        });
+      }
+
+      createHUD() {
+        this.hudText = this.add.text(20, 20, '', {
+          fontSize: '18px', color: '#38bdf8', backgroundColor: 'rgba(15, 23, 42, 0.85)', padding: { x: 12, y: 8 }
+        }).setScrollFactor(0).setDepth(20000);
+
+        // GTA-style Mini-Map Radar (Bottom-Left)
+        this.miniMapBg = this.add.rectangle(110, 610, 160, 160, 0x0f172a, 0.9).setStrokeStyle(3, 0x38bdf8).setScrollFactor(0).setDepth(20000);
+        this.miniMapDot = this.add.circle(110, 610, 5, 0x22c55e).setScrollFactor(0).setDepth(20001);
+
+        this.updateHUDText();
+      }
+
+      updateHUDText() {
+        this.hudText.setText(
+          `STATE: ${userStats.current_state}  |  CASH: ₦${userStats.cash.toLocaleString()}  |  HEALTH: ${userStats.health}%\nMISSION: ${userStats.current_mission}`
+        );
+      }
+
+      setupTouchControls() {
+        this.moveAngle = null;
+
+        document.getElementById('btn-drive').addEventListener('pointerdown', () => this.toggleDrive());
+        document.getElementById('btn-fire').addEventListener('pointerdown', () => this.fireWeapon());
+
+        const zone = document.getElementById('joystick-zone');
+        zone.addEventListener('touchstart', (e) => this.handleTouch(e), { passive: false });
+        zone.addEventListener('touchmove', (e) => this.handleTouch(e), { passive: false });
+        zone.addEventListener('touchend', () => { this.moveAngle = null; });
+      }
+
+      handleTouch(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const rect = e.target.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+
+        const dx = touch.clientX - centerX;
+        const dy = touch.clientY - centerY;
+        this.moveAngle = Math.atan2(dy, dx);
+      }
+
+      toggleDrive() {
+        let nearby = null;
+        this.vehicles.children.iterate(v => {
+          if (Phaser.Math.Distance.Between(this.player.x, this.player.y, v.x, v.y) < 80) {
+            nearby = v;
+          }
+        });
+
+        if (nearby) {
+          this.player.setPosition(nearby.x, nearby.y);
+          this.addNotification(`Entered ${nearby.getData('type')}`);
+        } else {
+          this.addNotification("No vehicle nearby");
+        }
+      }
+
+      fireWeapon() {
+        const flash = this.add.circle(this.player.x + Math.cos(this.player.rotation) * 30, this.player.y + Math.sin(this.player.rotation) * 30, 8, 0xfde047);
+        this.time.delayedCall(80, () => flash.destroy());
+      }
+
+      addNotification(msg) {
+        const text = this.add.text(640, 180, msg, { fontSize: '22px', color: '#22c55e', backgroundColor: '#000', padding: { x: 12, y: 6 } })
+          .setOrigin(0.5).setScrollFactor(0).setDepth(30000);
+        this.tweens.add({ targets: text, alpha: 0, y: 140, duration: 2000, onComplete: () => text.destroy() });
+      }
+
+      updateTimeAndWeather() {
+        // West Africa Time (UTC+1)
+        const watHour = new Date(new Date().getTime() + (1 * 3600000)).getUTCHours();
+        let tint = 0xffffff;
+
+        if (watHour >= 6 && watHour < 12) tint = 0xfef08a;      // Morning Gold
+        else if (watHour >= 12 && watHour < 17) tint = 0xffffff; // Afternoon Bright Daylight
+        else if (watHour >= 17 && watHour < 20) tint = 0xf97316; // Evening Orange
+        else tint = 0x1e1b4b;                                   // Night Dark Blue
+
+        this.cameras.main.setTint(tint);
+      }
+
+      update() {
+        if (this.moveAngle !== null) {
+          const speed = 240;
+          this.player.body.setVelocity(
+            Math.cos(this.moveAngle) * speed,
+            Math.sin(this.moveAngle) * speed
+          );
+          this.player.rotation = this.moveAngle;
+        } else {
+          this.player.body.setVelocity(0, 0);
+        }
+
+        // Mini-map radar calculation
+        const radarX = 110 + ((this.player.x / 6000) * 140 - 70);
+        const radarY = 610 + ((this.player.y / 4000) * 140 - 70);
+        this.miniMapDot.setPosition(radarX, radarY);
+
+        // State Region Check
+        let state = 'Lagos';
+        if (this.player.x > 2000 && this.player.x <= 4000 && this.player.y < 2000) state = 'Oyo (Ibadan)';
+        else if (this.player.x > 4000 && this.player.y < 2000) state = 'Abuja (FCT)';
+        else if (this.player.x > 4000 && this.player.y >= 2000) state = 'Kano';
+        else if (this.player.x > 2000 && this.player.x <= 4000 && this.player.y >= 2000) state = 'Rivers';
+        else if (this.player.x <= 2000 && this.player.y >= 2000) state = 'Akwa Ibom';
+
+        if (userStats.current_state !== state) {
+          userStats.current_state = state;
+          this.updateHUDText();
+          this.addNotification(`ENTERING ${state.toUpperCase()}`);
+          this.syncToSupabase();
+        }
+      }
+
+      async syncToSupabase() {
+        if (!currentUser) return;
+        await supabaseClient.from('profiles').upsert({
+          id: currentUser.id,
+          cash: userStats.cash,
+          health: userStats.health,
+          current_state: userStats.current_state,
+          updated_at: new Date()
+        });
+      }
+    }
+
+    function buyVehicle(model, price) {
+      if (userStats.cash >= price) {
+        userStats.cash -= price;
+        alert(`Congratulations! You purchased the ${model.toUpperCase()}.`);
+        document.getElementById('dealership-modal').style.display = 'none';
+      } else {
+        alert("Insufficient cash balance.");
+      }
+    }
+
+    function closeDealership() {
+      document.getElementById('dealership-modal').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
